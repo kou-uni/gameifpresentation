@@ -1,0 +1,591 @@
+{
+  "meta": {
+    "title": "第1審 — 量子コンピュータは、来年RSAを破るのか",
+    "subtitle": "GAMEIF PRESENTATION / CASE 001",
+    "author": "uni",
+    "theme": "court",
+    "lifeMax": 5,
+    "typeSpeed": 20,
+    "minutes": 12,
+    "learning": {
+      "goal": "量子コンピュータの「量子ビット数」の読み方を身につけ、誇大広告の否定と対策の不要を切り分けられるようにする",
+      "audience": "量子の名前は知っているが、数字の意味は知らない社会人・学生"
+    },
+    "sourcesNote": "数字には出典と年を付けてある。登壇前に必ず最新を確認すること（docs/AUTHORING.md の「数字の賞味期限」参照）"
+  },
+  "cast": {
+    "judge": {
+      "name": "裁判長",
+      "art": "judge"
+    },
+    "hero": {
+      "name": "弁護人 ミライ",
+      "art": "hero",
+      "side": "left"
+    },
+    "himuro": {
+      "name": "検事 ヒムロ",
+      "art": "prosecutor",
+      "side": "right"
+    },
+    "hype": {
+      "name": "証人 ハイプ（IR担当）",
+      "art": "detective"
+    },
+    "aikawa": {
+      "name": "証人 相川（AI営業）",
+      "art": "witness"
+    },
+    "azuki": {
+      "name": "助手 アズキ",
+      "art": "assistant",
+      "side": "left"
+    }
+  },
+  "evidence": [
+    {
+      "id": "ev-logical",
+      "name": "論理量子ビットの値段",
+      "icon": "chart",
+      "desc": "誤り訂正のため、論理1個に物理およそ1,000個",
+      "detail": "表面符号では、使える論理量子ビット1個を作るのに物理量子ビットが約1,000個必要になる（誤り率に依存）。つまり「1,000量子ビット搭載」は「論理1個ぶん」に近い。"
+    },
+    {
+      "id": "ev-scale",
+      "name": "実機のスケール",
+      "icon": "doc",
+      "desc": "現行機は物理1,000量子ビット規模",
+      "detail": "IBM Condor が1,121物理量子ビット（2023年）。以降は数を増やすより誤り率を下げる方向に舵が切られている。"
+    },
+    {
+      "id": "ev-gidney",
+      "name": "RSA-2048の見積り",
+      "icon": "quote",
+      "desc": "物理2,000万個で8時間（2019年の見積り）",
+      "detail": "Gidney & Ekerå (2019) は、RSA-2048を8時間で解くのに約2,000万の物理量子ビットが必要と見積もった。2025年の改良見積りでは100万未満／1週間まで下がったが、それでも現行機の1,000倍規模。"
+    },
+    {
+      "id": "ev-qml",
+      "name": "提供元自身の検証",
+      "icon": "code",
+      "desc": "古典データでは、古典手法が追いついた",
+      "detail": "量子機械学習を推す側の研究（Huang et al., Nature Comms 2021 ほか）自身が、古典データに対しては古典アルゴリズムが量子カーネルに追いつくことを示している。優位が残るのは、データがもともと量子である場合。"
+    },
+    {
+      "id": "ev-utility",
+      "name": "Utility は覆された",
+      "icon": "chart",
+      "desc": "「古典を超えた」主張は、古典に再現された",
+      "detail": "2023年の量子ユーティリティ主張（Kim et al., Nature）は、その後テンソルネットワーク等の古典手法で再現された。Utility（役に立つ）と Advantage（古典に勝つ）は別物。"
+    },
+    {
+      "id": "ev-nist",
+      "name": "耐量子暗号の標準",
+      "icon": "thing",
+      "desc": "2024年に標準化済み。移行はもう始まっている",
+      "detail": "NIST が ML-KEM / ML-DSA / SLH-DSA を2024年に標準化。理由は「今この瞬間に暗号文を盗んで保存し、量子が来た将来に復号する」(harvest now, decrypt later) から。破られる日を待ってからでは間に合わない。"
+    }
+  ],
+  "scenes": [
+    {
+      "type": "title",
+      "chapter": "開廷",
+      "kicker": "GAMEIF PRESENTATION / CASE 001",
+      "title": "量子コンピュータは、<br>来年RSAを破るのか",
+      "sub": "被告人：あなたの会社のセキュリティ予算",
+      "cta": "クリック / Space で開廷",
+      "note": "最初に「今日はみんなが弁護人です。証拠を選ぶのは客席」と宣言する。ここで役割を渡さないと、ただのスライドになる。"
+    },
+    {
+      "type": "dialogue",
+      "chapter": "開廷の宣言",
+      "bg": "courtroom",
+      "lines": [
+        {
+          "who": "judge",
+          "pose": "normal",
+          "sfx": "gavel",
+          "text": "これより、<b>第1審</b>を開廷する。",
+          "note": "拍手を煽ってもいい。場が温まる。"
+        },
+        {
+          "who": "judge",
+          "pose": "talk",
+          "text": "争点はひとつ。<em>「量子コンピュータは、来年にはRSA暗号を破るのか」</em>"
+        },
+        {
+          "who": "himuro",
+          "pose": "confident",
+          "sfx": "select",
+          "text": "検察の主張は明白です。<b>破ります。</b>\nゆえに、いま対策を考えるのは<span class=\"hit\">無駄</span>である。"
+        },
+        {
+          "who": "azuki",
+          "pose": "shock",
+          "text": "えっ、無駄……？ でも去年もそう聞いた気が……",
+          "note": "客席の素直な感覚を助手に言わせる。ここで聴衆が自分の側を見つける。"
+        },
+        {
+          "who": "hero",
+          "pose": "confident",
+          "text": "弁護人は争います。\n<b>破られる日</b>と、<b>対策すべき日</b>は、まったく別の日です。"
+        }
+      ]
+    },
+    {
+      "type": "slide",
+      "chapter": "今日の争点",
+      "kicker": "ISSUE",
+      "title": "争点は「いつ」ではなく「何を数えているか」",
+      "bullets": [
+        "量子ビット<b>1,000個</b>と聞いて、あなたは何を想像したか",
+        "その数は <b>物理</b> か <b>論理</b> か —— ここで話が1,000倍ずれる",
+        "「誇大広告だ」と「だから対策は不要だ」は<em>別の主張</em>"
+      ],
+      "footnote": "この3行を、法廷で証拠として突きつけていきます。",
+      "note": "スライドは「休廷」。ここだけは普通の講義に戻す。長居しないこと。"
+    },
+    {
+      "type": "evidence",
+      "chapter": "証拠の開示",
+      "give": [
+        "ev-logical",
+        "ev-scale",
+        "ev-gidney",
+        "ev-nist"
+      ],
+      "lines": [
+        {
+          "who": "judge",
+          "pose": "normal",
+          "sfx": "evidence",
+          "text": "弁護人から4点の証拠が提出された。<b>法廷記録</b>に加える。"
+        },
+        {
+          "who": "azuki",
+          "pose": "talk",
+          "text": "<b>E</b> キーでいつでも開けます！ 中身は読んでおいてくださいね。",
+          "note": "ここで実際に E を押して客席に中身を見せる。以後「どれだ！」と聞ける状態を作る。"
+        }
+      ]
+    },
+    {
+      "type": "testimony",
+      "chapter": "証人ハイプの証言",
+      "banner": "証言 — 「もう時間がない」",
+      "bg": "stand",
+      "witness": "hype",
+      "penalty": 1,
+      "shout": "異議あり！",
+      "intro": [
+        {
+          "who": "himuro",
+          "pose": "confident",
+          "text": "証人、あなたの見解を述べてください。"
+        },
+        {
+          "who": "hype",
+          "pose": "confident",
+          "sfx": "select",
+          "text": "喜んで。<b>数字は嘘をつきません。</b>"
+        },
+        {
+          "who": "azuki",
+          "pose": "talk",
+          "text": "証言は <b>→</b> で送れます。おかしいと思ったら <b>E</b> で証拠をつきつけて！",
+          "note": "操作説明はキャラに言わせる。スライドで説明すると空気が止まる。"
+        }
+      ],
+      "statements": [
+        {
+          "text": "量子コンピュータは、古典計算機では決して解けない問題を解きます。",
+          "pose": "confident",
+          "note": "ここは条件付きで正しい。潰さない。P で深掘りすると誠実さが出る。",
+          "press": [
+            {
+              "who": "hero",
+              "pose": "think",
+              "style": "press",
+              "text": "「決して解けない」——具体的にはどの問題ですか？"
+            },
+            {
+              "who": "hype",
+              "pose": "talk",
+              "text": "素因数分解、離散対数。<b>Shorのアルゴリズム</b>です。"
+            },
+            {
+              "who": "hero",
+              "pose": "normal",
+              "text": "そこは争いません。<em>理論としては正しい。</em>\n問題は、それを走らせる機械が今あるかどうかだ。"
+            }
+          ]
+        },
+        {
+          "text": "そして現に、<b>1,121量子ビット</b>のマシンがもう動いているのです。",
+          "pose": "confident",
+          "note": "これも事実。ここで「嘘だ」と言うと負ける。事実を認めた上で意味を問う。",
+          "press": [
+            {
+              "who": "hero",
+              "pose": "think",
+              "style": "press",
+              "text": "IBM Condor、2023年ですね。それは認めます。"
+            },
+            {
+              "who": "hype",
+              "pose": "confident",
+              "text": "でしょう！ RSA-2048は2,048ビット。<b>もう半分まで来ている。</b>"
+            },
+            {
+              "who": "azuki",
+              "pose": "shock",
+              "text": "半分……！？ そ、それはまずいのでは……"
+            },
+            {
+              "who": "hero",
+              "pose": "confident",
+              "text": "……いま、<em>とても重要なことを言いましたね。</em>",
+              "note": "ここが山場の直前。ためる。客席に「どの証拠だ？」と聞く。"
+            }
+          ]
+        },
+        {
+          "text": "ゆえに<b>来年には</b>RSAは破られる。1,121ビットが2,048ビットに届くのは時間の問題です。",
+          "pose": "confident",
+          "weak": {
+            "evidence": "ev-logical",
+            "onCorrect": [
+              {
+                "who": "hero",
+                "pose": "point",
+                "flash": true,
+                "text": "その「1,121」は<b>物理</b>量子ビットだ。\nそしてRSAを解くのに必要なのは<em>論理</em>量子ビットだ。"
+              },
+              {
+                "who": "hero",
+                "pose": "confident",
+                "text": "誤り訂正のため、<b>論理1個に物理およそ1,000個。</b>\n1,121個の物理量子ビットは——<span class=\"hit\">論理1個ぶん</span>にすぎない。"
+              },
+              {
+                "who": "hype",
+                "pose": "damage",
+                "sfx": "damage",
+                "shake": true,
+                "text": "な……1,000倍……！？"
+              },
+              {
+                "who": "himuro",
+                "pose": "shock",
+                "text": "（半分どころか、<span class=\"hit\">1,000分の1</span>だったというのか……）"
+              },
+              {
+                "who": "hero",
+                "pose": "normal",
+                "text": "2019年の見積りでは、RSA-2048を8時間で解くのに<b>物理2,000万個</b>。\n2025年の改良版でも100万未満。それでも現行機の<em>1,000倍</em>だ。",
+                "note": "ここで ev-gidney の中身を口で言う。証拠は見せるだけでなく読み上げる。"
+              },
+              {
+                "who": "judge",
+                "pose": "normal",
+                "sfx": "gavel",
+                "text": "……量子ビットの数は、<b>物理か論理かを聞くまで意味を持たない</b>。\n本法廷はそう認定する。"
+              }
+            ],
+            "onWrong": [
+              {
+                "who": "himuro",
+                "pose": "confident",
+                "text": "それが証言のどこと衝突するのですか。<span class=\"hit\">的が外れている。</span>"
+              },
+              {
+                "who": "azuki",
+                "pose": "sweat",
+                "text": "落ち着いて……数字の<b>単位</b>を疑うんです……！"
+              }
+            ]
+          }
+        },
+        {
+          "text": "どうせ破られるのだから、<b>いま対策を考えるのは無駄</b>です。破られてから動けばいい。",
+          "pose": "confident",
+          "note": "本当の学びはここ。誇大広告を否定した勢いで「だから対策不要」に乗らせない。",
+          "weak": {
+            "evidence": "ev-nist",
+            "onCorrect": [
+              {
+                "who": "hero",
+                "pose": "point",
+                "flash": true,
+                "text": "逆だ。<b>破られる前にやらなければ、間に合わない。</b>"
+              },
+              {
+                "who": "hero",
+                "pose": "confident",
+                "text": "攻撃者は<em>いま暗号文を盗んで保存し、量子が来た将来に復号する</em>。\n——<b>harvest now, decrypt later</b>。"
+              },
+              {
+                "who": "hero",
+                "pose": "normal",
+                "text": "だからNISTは2024年に耐量子暗号を標準化した。\n<b>ML-KEM / ML-DSA / SLH-DSA。</b>移行はもう始まっている。"
+              },
+              {
+                "who": "hype",
+                "pose": "damage",
+                "sfx": "damage",
+                "shake": true,
+                "text": "そ、そんな……両方から殴られた……！"
+              },
+              {
+                "who": "judge",
+                "pose": "normal",
+                "sfx": "gavel",
+                "text": "<b>誇大広告の否定</b>と、<b>対策の不要</b>は別の主張である。\n混ぜた証言は、証言として採用できない。"
+              }
+            ],
+            "onWrong": [
+              {
+                "who": "himuro",
+                "pose": "confident",
+                "text": "それは先ほど片付いた話です。<span class=\"hit\">同じ証拠は二度効かない。</span>"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "slide",
+      "chapter": "休廷 — 物理と論理",
+      "kicker": "RECESS 1",
+      "title": "量子ビットは、2種類ある",
+      "bullets": [
+        "<b>物理量子ビット</b> — 実際のハードウェア。すぐ壊れる（ノイズ）",
+        "<b>論理量子ビット</b> — 誤り訂正で守られた、計算に使える1個",
+        "変換レート：<em>論理1 ≒ 物理1,000</em>（誤り率次第でもっと悪い）",
+        "だから「量子ビット数」の広告は、<b>単位を聞くまで読めない</b>"
+      ],
+      "footnote": "出典：Gidney &amp; Ekerå 2019 / IBM Condor 2023",
+      "note": "ここは板書パート。図があるなら image で差し替える。"
+    },
+    {
+      "type": "evidence",
+      "chapter": "追加証拠の提出",
+      "give": [
+        "ev-qml",
+        "ev-utility"
+      ],
+      "lines": [
+        {
+          "who": "hero",
+          "pose": "confident",
+          "text": "弁護人より、<b>2点を追加</b>で提出します。"
+        },
+        {
+          "who": "judge",
+          "pose": "normal",
+          "sfx": "evidence",
+          "text": "「提供元自身の検証」および「Utility は覆された」を法廷記録に加える。"
+        },
+        {
+          "who": "azuki",
+          "pose": "talk",
+          "text": "次の証人が来ます。<b>E</b> で中身を確認しておいてください！",
+          "note": "ここで客席に証拠を読ませる。読まずに突かせると当てもので終わる。"
+        }
+      ]
+    },
+    {
+      "type": "testimony",
+      "chapter": "証人相川の証言",
+      "banner": "証言 — 「量子でAIが速くなる」",
+      "bg": "stand",
+      "witness": "aikawa",
+      "penalty": 1,
+      "shout": "異議あり！",
+      "intro": [
+        {
+          "who": "himuro",
+          "pose": "normal",
+          "text": "第二の証人を呼びます。量子AIを販売している方です。"
+        },
+        {
+          "who": "aikawa",
+          "pose": "confident",
+          "sfx": "select",
+          "text": "御社のデータ、<b>量子に載せませんか？</b>"
+        },
+        {
+          "who": "azuki",
+          "pose": "sweat",
+          "text": "うわ、営業だ……"
+        }
+      ],
+      "statements": [
+        {
+          "text": "量子機械学習は、AIの学習を<b>指数的に</b>速くします。",
+          "pose": "confident",
+          "press": [
+            {
+              "who": "hero",
+              "pose": "think",
+              "style": "press",
+              "text": "何に対して指数的に、ですか。"
+            },
+            {
+              "who": "aikawa",
+              "pose": "talk",
+              "text": "え……ええと、<b>理論的には</b>、ですね。"
+            }
+          ]
+        },
+        {
+          "text": "実際、画像分類のベンチマークで<b>量子カーネル</b>が好成績を出しました。",
+          "pose": "confident",
+          "note": "事実として一部正しい。ここは潰さずに、次の飛躍を待つ。",
+          "press": [
+            {
+              "who": "hero",
+              "pose": "think",
+              "style": "press",
+              "text": "その比較相手は、<b>チューニングされた古典手法</b>でしたか？"
+            },
+            {
+              "who": "aikawa",
+              "pose": "sweat",
+              "text": "……そ、そこは、比較対象の選定として……"
+            }
+          ]
+        },
+        {
+          "text": "ですから、<b>御社の顧客データ</b>も量子に載せれば精度が上がります。",
+          "pose": "confident",
+          "weak": {
+            "evidence": "ev-qml",
+            "onCorrect": [
+              {
+                "who": "hero",
+                "pose": "point",
+                "flash": true,
+                "text": "<b>古典データに、量子の優位は示されていない。</b>"
+              },
+              {
+                "who": "hero",
+                "pose": "confident",
+                "text": "しかもそれを示したのは、<em>量子機械学習を推している側の研究</em>だ。\n古典データでは、古典アルゴリズムが追いついた。"
+              },
+              {
+                "who": "hero",
+                "pose": "normal",
+                "text": "優位が残るのは、<b>データがもともと量子であるとき</b>。\n御社の顧客データは——量子ですか？"
+              },
+              {
+                "who": "aikawa",
+                "pose": "damage",
+                "sfx": "damage",
+                "shake": true,
+                "text": "……CSVです……"
+              },
+              {
+                "who": "azuki",
+                "pose": "confident",
+                "text": "CSVでした！"
+              }
+            ],
+            "onWrong": [
+              {
+                "who": "aikawa",
+                "pose": "confident",
+                "text": "それは我々の話とは<span class=\"hit\">関係ありませんね。</span>"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "slide",
+      "chapter": "休廷 — Utility と Advantage",
+      "kicker": "RECESS 2",
+      "title": "「役に立つ」と「古典に勝つ」は別物",
+      "bullets": [
+        "<b>Utility</b> — 実機で意味のある計算ができた",
+        "<b>Advantage</b> — 古典計算機では現実的に無理だと示せた",
+        "2023年の Utility 主張は、のちに<em>古典手法で再現された</em>",
+        "量子の主張は<b>古典に殴り返される</b>。それが健全な進み方"
+      ],
+      "footnote": "この殴り返しがあるから、分野は前に進む。負けたのではない。"
+    },
+    {
+      "type": "choice",
+      "chapter": "最終弁論 — 客席の判断",
+      "question": "では、あなたの会社はいま何をすべきか。<br><small style=\"font-size:.6em;opacity:.7\">客席で多い方に手を挙げてもらってから押す</small>",
+      "penalty": 1,
+      "note": "ここは必ず客席に聞く。挙手させてから押す。押すのは発表者でいい。",
+      "options": [
+        {
+          "text": "量子コンピュータを買って備える",
+          "correct": false,
+          "reply": [
+            {
+              "who": "judge",
+              "pose": "confident",
+              "text": "買って何をするのかね。<span class=\"hit\">論理1個</span>では何も解けんぞ。"
+            }
+          ]
+        },
+        {
+          "text": "耐量子暗号への移行計画を、いま立てる",
+          "correct": true,
+          "shout": "異議なし！",
+          "reply": [
+            {
+              "who": "hero",
+              "pose": "confident",
+              "text": "それが正解だ。<b>破られる日</b>を待つのではなく、<em>盗まれている今</em>に備える。"
+            },
+            {
+              "who": "judge",
+              "pose": "normal",
+              "sfx": "gavel",
+              "text": "本法廷はこれを支持する。"
+            }
+          ]
+        },
+        {
+          "text": "量子は誇大広告なので無視する",
+          "correct": false,
+          "reply": [
+            {
+              "who": "himuro",
+              "pose": "confident",
+              "text": "……それは今日の法廷で最も危険な結論です。\n<span class=\"hit\">広告を否定したことと、脅威がないことは別</span>でしょう。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "verdict",
+      "chapter": "判決",
+      "kicker": "VERDICT",
+      "title": "本日の認定事実",
+      "takeaways": [
+        "量子ビット数は、<b>物理か論理か</b>を聞くまで意味を持たない（論理1 ≒ 物理1,000）",
+        "<b>Utility</b>（役に立つ）と <b>Advantage</b>（古典に勝つ）は別物",
+        "<b>古典データ</b>の機械学習に、量子の優位はまだ示されていない",
+        "それでも<b>耐量子暗号の移行は今やる</b> — harvest now, decrypt later",
+        "<b>誇大広告の否定</b>と、<b>対策の不要</b>は別の主張"
+      ],
+      "cta": "R で最初から　Esc で目次",
+      "lines": [
+        {
+          "who": "judge",
+          "pose": "normal",
+          "sfx": "gavel",
+          "text": "静粛に。——判決を言い渡す。"
+        }
+      ],
+      "note": "最後の1枚は写真を撮らせる時間を取る。ここだけ20秒黙る。"
+    }
+  ]
+}

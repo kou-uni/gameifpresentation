@@ -1,0 +1,16 @@
+[
+  {
+    "file": "demo-quantum.json",
+    "title": "第1審 — 量子コンピュータは、来年RSAを破るのか",
+    "desc": "「1,000量子ビット」の読み方を法廷で争う。物理と論理、Utility と Advantage、そして harvest now decrypt later。",
+    "theme": "court",
+    "minutes": 12
+  },
+  {
+    "file": "template.json",
+    "title": "テンプレート（白紙のケース）",
+    "desc": "全シーン種別が1つずつ入った雛形。これをコピーして書き始める。",
+    "theme": "court",
+    "minutes": 3
+  }
+]

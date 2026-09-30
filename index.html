@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAMEIF PRESENTATION — ケース一覧</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23101d3a'/%3E%3Cpath d='M50 20v56M30 32h40M30 32L20 54h20zM70 32L60 54h20zM34 80h32' stroke='%23f0c23c' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{--navy:#101d3a;--ink:#070c18;--accent:#f0c23c;--frame:#eef2f8;
+        --font:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:linear-gradient(170deg,var(--navy),var(--ink) 60%);color:var(--frame);
+       font-family:var(--font);min-height:100vh;padding:8vh 6vw;}
+  header{margin-bottom:6vh;max-width:56rem}
+  .kicker{letter-spacing:.5em;color:var(--accent);font-weight:900;font-size:.8rem;margin-bottom:1rem}
+  h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.15;font-weight:900;margin-bottom:1.2rem}
+  header p{opacity:.8;line-height:1.8;font-size:1rem;max-width:44rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1.4rem;max-width:74rem}
+  a.card{display:block;text-decoration:none;color:inherit;background:rgba(255,255,255,.055);
+    border:1px solid rgba(255,255,255,.14);border-radius:.8rem;padding:1.6rem;transition:.15s}
+  a.card:hover{background:rgba(240,194,60,.14);border-color:var(--accent);transform:translateY(-3px)}
+  a.card .no{font-size:.72rem;letter-spacing:.3em;color:var(--accent);font-weight:900}
+  a.card h2{font-size:1.28rem;margin:.6rem 0 .5rem;line-height:1.35;font-weight:900}
+  a.card p{font-size:.86rem;opacity:.75;line-height:1.7}
+  a.card .tag{display:inline-block;margin-top:1rem;font-size:.7rem;letter-spacing:.14em;
+    border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:.2rem .7rem;opacity:.8}
+  footer{margin-top:7vh;font-size:.82rem;opacity:.6;line-height:1.9;max-width:52rem}
+  footer a{color:var(--accent)}
+  kbd{background:#fff2;border:1px solid #fff4;border-radius:.25rem;padding:0 .4rem;font-family:var(--font);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">GAMEIF PRESENTATION</div>
+  <h1>プレゼンを、法廷バトルとしてやる。</h1>
+  <p>通説をキャラに証言させ、聴衆が根拠を選んでムジュンを突く。学びの核を「異議あり！」の
+     瞬間に置くための、法廷型プレゼンテンプレートです。JSON 1枚でケースを書けます。</p>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  操作は <kbd>→</kbd> 進む / <kbd>←</kbd> 戻る / <kbd>E</kbd> 法廷記録 / <kbd>P</kbd> ゆさぶる /
+  <kbd>H</kbd> 発表者ノート / <kbd>Esc</kbd> 目次。クリッカーの <kbd>→</kbd><kbd>←</kbd> だけでも通せます。<br>
+  ケースの書き方は <a href="docs/FORMAT.md">docs/FORMAT.md</a>、
+  トンマナの決め方は <a href="docs/TONE-AND-MANNER.md">docs/TONE-AND-MANNER.md</a>。
+</footer>
+
+<script>
+fetch('cases/index.json').then(r=>r.json()).then(list=>{
+  document.getElementById('grid').innerHTML = list.map((c,i)=>
+    `<a class="card" href="player/index.html?case=../cases/${c.file}">
+       <div class="no">CASE ${String(i+1).padStart(3,'0')}</div>
+       <h2>${c.title}</h2><p>${c.desc||''}</p>
+       <span class="tag">${c.theme||'court'}${c.minutes?' · 約'+c.minutes+'分':''}</span>
+     </a>`).join('');
+}).catch(e=>{
+  document.getElementById('grid').innerHTML =
+    '<p style="opacity:.7">cases/index.json が読めません。ローカルなら <code>npm start</code> で開いてください。</p>';
+});
+</script>
+</body>
+</html>

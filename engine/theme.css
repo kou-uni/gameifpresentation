@@ -1,0 +1,374 @@
+/* =========================================================================
+   GAMEIF PRESENTATION — theme.css
+   トーン&マナーは全部ここ。CSS変数を差し替えるとケースの世界観が変わる。
+   外部フォント/画像は一切読まない（会場のWi-Fiは死ぬ前提）。
+   ========================================================================= */
+
+:root{
+  /* --- 配色プリセット: court（既定・法廷） --- */
+  --ink:        #070c18;   /* 一番暗い地 */
+  --navy:       #101d3a;   /* テキストボックス地 */
+  --navy-2:     #1d3160;
+  --frame:      #eef2f8;   /* 枠・本文 */
+  --accent:     #f0c23c;   /* 金。名前プレート・強調 */
+  --accent-2:   #c8892a;
+  --testimony:  #5ef08a;   /* 証言の緑（原作の作法） */
+  --press:      #7fd3ff;   /* ゆさぶりの水色 */
+  --damage:     #ff3d4d;
+  --wood:       #3a2517;
+  --wood-2:     #5b3a22;
+  --paper:      #f6f1e4;
+
+  --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+          "Yu Gothic", "Meiryo", system-ui, sans-serif;
+
+  /* stage内の基準サイズ。全部 cqw/cqh 由来にして解像度非依存にする */
+  --u: 1cqw;
+}
+
+/* --- 追加プリセット（case.meta.theme で切替） --- */
+[data-theme="lab"]{      /* 研究室・科学。青白い */
+  --navy:#0b2230; --navy-2:#0f3b4f; --accent:#4fd6ff; --accent-2:#2596bf;
+  --wood:#16303b; --wood-2:#1e4655; --testimony:#8affd1;
+}
+[data-theme="startup"]{  /* ピッチ・事業。黒×蛍光 */
+  --navy:#141414; --navy-2:#242424; --accent:#c8ff3c; --accent-2:#8fbf1f;
+  --wood:#1b1b1b; --wood-2:#2b2b2b; --testimony:#c8ff3c; --press:#ff7ac8;
+}
+[data-theme="warm"]{     /* ワークショップ・和やか */
+  --navy:#3a1f22; --navy-2:#5c3136; --accent:#ffcf6b; --accent-2:#d09a34;
+  --wood:#4a2a1c; --wood-2:#6d4128; --testimony:#ffe08a;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background:#000; color:var(--frame); font-family:var(--font);
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+  user-select:none; cursor:default;
+}
+
+/* ===================== ステージ（16:9 固定） ===================== */
+#stage{
+  position:fixed; inset:0; margin:auto;
+  aspect-ratio:16/9; width:min(100vw, calc(100vh*16/9)); height:auto;
+  container-type:size;
+  background:var(--ink); overflow:hidden;
+  box-shadow:0 0 0 100vmax #000;
+}
+
+/* ===================== 背景 ===================== */
+.bg{position:absolute; inset:0; transition:opacity .25s;}
+.bg::after{ /* 上からの光 */
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,.18), transparent 60%);
+}
+
+.bg[data-bg="courtroom"]{
+  background:
+    linear-gradient(180deg, var(--navy) 0%, var(--ink) 45%, var(--wood) 46%, var(--wood-2) 100%);
+}
+.bg .emblem{display:none;}
+.bg[data-bg="courtroom"] .emblem{
+  display:block; position:absolute; left:50%; top:14%; translate:-50% 0;
+  width:16cqw; aspect-ratio:1; opacity:.32;
+}
+.bg[data-bg="stand"]{
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 2cqw, transparent 2cqw 6cqw),
+    linear-gradient(180deg, var(--wood-2), var(--wood) 60%, #241407);
+}
+.bg[data-bg="lobby"]{
+  background:linear-gradient(180deg,#2a3f6b,#101d3a 70%,#0a1226);
+}
+.bg[data-bg="dark"]{ background:radial-gradient(70% 70% at 50% 40%, #16192b, #000 80%); }
+.bg[data-bg="white"]{ background:var(--paper); }
+
+/* 集中線（演出用） */
+.bg .lines{
+  position:absolute; inset:-20%; opacity:0;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,
+    rgba(0,0,0,.55) 0deg 1.4deg, transparent 1.4deg 4deg);
+  transition:opacity .12s;
+}
+#stage.shouting .bg .lines{opacity:1; animation:spin 6s linear infinite;}
+@keyframes spin{to{rotate:360deg}}
+
+/* ===================== 立ち絵 ===================== */
+.actors{position:absolute; inset:0; pointer-events:none;}
+.actor{
+  position:absolute; bottom:0; left:50%; translate:-50% 0;
+  height:82cqh; display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; transition:opacity .18s;
+}
+.actor.show{opacity:1;}
+.actor.left{left:26%;} .actor.right{left:74%;}
+.actor img,.actor svg{height:100%; width:auto; display:block;
+  filter:drop-shadow(0 0 3cqw rgba(0,0,0,.55));}
+.actor.talking{animation:bob .5s ease-in-out infinite alternate;}
+@keyframes bob{to{translate:-50% -0.5cqh}}
+.actor.damage{animation:hit .35s steps(2) 3;}
+@keyframes hit{50%{filter:brightness(2.2) saturate(0) drop-shadow(0 0 2cqw var(--damage))}}
+
+/* ===================== HUD ===================== */
+.hud{position:absolute; inset:0; pointer-events:none; padding:2.2cqw;
+     display:flex; justify-content:space-between; align-items:flex-start;}
+.life{display:flex; gap:.7cqw; align-items:center;}
+.life .pip{
+  width:2.4cqw; height:2.4cqw; border-radius:50%;
+  background:var(--damage); box-shadow:0 0 1.2cqw rgba(255,60,80,.8), inset 0 -.4cqw rgba(0,0,0,.35);
+  transition:.3s;
+}
+.life .pip.off{background:#2a2f3d; box-shadow:none; scale:.7; opacity:.6;}
+.chapter{
+  font-size:2cqw; font-weight:700; letter-spacing:.08em;
+  color:var(--accent); text-shadow:0 .25cqw 0 rgba(0,0,0,.8);
+  text-align:right; max-width:40cqw; line-height:1.3;
+}
+.chapter small{display:block; font-size:1.4cqw; color:var(--frame); opacity:.75; letter-spacing:.2em;}
+
+/* 「証言」バナー */
+.banner{
+  position:absolute; top:9cqh; left:50%; translate:-50% 0;
+  padding:.8cqw 3cqw; font-size:2.6cqw; font-weight:900; letter-spacing:.3em;
+  color:var(--testimony); background:rgba(0,0,0,.62);
+  border-top:.3cqw solid var(--testimony); border-bottom:.3cqw solid var(--testimony);
+  text-shadow:0 0 1.5cqw var(--testimony);
+  opacity:0; transition:opacity .2s; white-space:nowrap;
+}
+.banner.show{opacity:1;}
+
+/* ===================== テキストボックス ===================== */
+.textbox{
+  position:absolute; left:2.5cqw; right:2.5cqw; bottom:2.5cqw; height:26cqh;
+  background:linear-gradient(180deg, var(--navy-2), var(--navy) 60%);
+  border:.45cqw solid var(--frame);
+  border-radius:.6cqw;
+  box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.6), inset 0 0 3cqw rgba(0,0,0,.5);
+  padding:3.2cqh 3cqw 2cqh;
+  opacity:0; transition:opacity .15s;
+}
+.textbox.show{opacity:1;}
+/* 四隅の鋲 */
+.textbox::before,.textbox::after{
+  content:""; position:absolute; width:1.1cqw; height:1.1cqw; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 .6cqw rgba(0,0,0,.6);
+}
+.textbox::before{left:1cqw; bottom:1cqw;}
+.textbox::after{right:1cqw; bottom:1cqw;}
+
+.nameplate{
+  position:absolute; top:-2.6cqh; left:1.6cqw;
+  padding:.5cqh 1.6cqw; font-size:2.1cqw; font-weight:900; letter-spacing:.08em;
+  color:#1a1205; background:linear-gradient(180deg, var(--accent), var(--accent-2));
+  border:.3cqw solid var(--frame); border-radius:.4cqw;
+  box-shadow:0 .4cqw 1cqw rgba(0,0,0,.5); white-space:nowrap;
+  opacity:0; transition:opacity .15s;
+}
+.nameplate.show{opacity:1;}
+
+.line{
+  font-size:3.1cqw; line-height:1.55; font-weight:600;
+  white-space:pre-wrap; word-break:normal; overflow-wrap:anywhere;
+  text-shadow:0 .25cqw .3cqw rgba(0,0,0,.75);
+}
+.line.testimony{color:var(--testimony); text-shadow:0 0 1.2cqw rgba(94,240,138,.5);}
+.line.press{color:var(--press);}
+.line em{color:var(--accent); font-style:normal; font-weight:900;}
+.line b{color:var(--accent); }
+.line .hit{color:var(--damage); font-weight:900;}
+
+.next{
+  position:absolute; right:2.2cqw; bottom:1.2cqh;
+  width:0; height:0; border:1.1cqw solid transparent; border-top-color:var(--accent);
+  animation:blink 1s steps(2) infinite; opacity:0;
+}
+.next.show{opacity:1;}
+@keyframes blink{50%{opacity:.15}}
+
+/* ===================== 叫び（異議あり！） =====================
+   注意: このクラス名は #stage には付けないこと。付くと opacity:0 が
+   ステージ全体に当たり、山場で画面が真っ暗になる（実際にやった）。
+   ステージ側の演出クラスは .shouting。 */
+#stage > .shout{
+  position:absolute; inset:0; display:grid; place-items:center;
+  opacity:0; pointer-events:none; z-index:40;
+}
+#stage > .shout.show{opacity:1;}
+#stage > .shout span{
+  font-size:11cqw; font-weight:900; letter-spacing:.02em;
+  color:#fff; rotate:-7deg; scale:.4;
+  -webkit-text-stroke:1.2cqw var(--ink); paint-order:stroke fill;
+  text-shadow:0 0 4cqw rgba(0,0,0,.9), 0 1cqw 0 var(--accent-2);
+  filter:drop-shadow(0 0 2cqw var(--accent));
+}
+#stage > .shout.show span{animation:slam .45s cubic-bezier(.2,1.6,.3,1) forwards;}
+@keyframes slam{0%{scale:.3; rotate:-22deg; opacity:0} 60%{scale:1.12} 100%{scale:1; rotate:-7deg; opacity:1}}
+
+.flash{position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:50;}
+.flash.go{animation:fl .38s ease-out;}
+@keyframes fl{0%{opacity:1} 100%{opacity:0}}
+
+#stage.shake{animation:sh .4s;}
+@keyframes sh{
+  0%,100%{translate:0 0} 20%{translate:-1.2cqw .6cqh} 40%{translate:1cqw -.5cqh}
+  60%{translate:-.6cqw -.3cqh} 80%{translate:.5cqw .3cqh}
+}
+
+/* ===================== スライド（講義パート） ===================== */
+.slide{
+  position:absolute; inset:0; z-index:20; padding:8cqh 8cqw;
+  background:linear-gradient(160deg, var(--navy) 0%, var(--ink) 100%);
+  display:none; flex-direction:column; justify-content:center; gap:3cqh;
+}
+.slide.show{display:flex;}
+.slide h2{
+  font-size:5.6cqw; font-weight:900; line-height:1.2; letter-spacing:.01em;
+  color:var(--frame);
+  border-left:1cqw solid var(--accent); padding-left:2cqw;
+}
+.slide h2 small{display:block; font-size:1.8cqw; letter-spacing:.3em; color:var(--accent); margin-bottom:.8cqh;}
+.slide ul{list-style:none; display:flex; flex-direction:column; gap:1.6cqh;}
+.slide li{
+  font-size:2.9cqw; font-weight:600; line-height:1.45; padding-left:3.4cqw; position:relative;
+  opacity:0; translate:0 1.5cqh; animation:rise .4s forwards;
+}
+.slide li::before{
+  content:"▶"; position:absolute; left:0; color:var(--accent); font-size:2cqw; top:.5cqh;
+}
+@keyframes rise{to{opacity:1; translate:0 0}}
+.slide .big{font-size:6.5cqw; font-weight:900; text-align:center; line-height:1.3; color:var(--accent);}
+.slide .note{font-size:2cqw; opacity:.7;}
+.slide figure{text-align:center;}
+.slide figure img{max-width:76cqw; max-height:44cqh; object-fit:contain;}
+.slide figcaption{font-size:1.7cqw; opacity:.7; margin-top:1cqh;}
+
+/* ===================== 法廷記録（証拠品） ===================== */
+.court-record{
+  position:absolute; inset:0; z-index:60; display:none;
+  background:rgba(4,8,16,.9); padding:6cqh 6cqw;
+  flex-direction:column; gap:2.5cqh;
+}
+.court-record.show{display:flex;}
+.court-record h3{font-size:2.6cqw; letter-spacing:.3em; color:var(--accent); font-weight:900;}
+.court-record h3 small{font-size:1.5cqw; letter-spacing:.1em; color:var(--frame); opacity:.7; margin-left:2cqw;}
+.ev-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:2cqw; flex:1; align-content:start;}
+.ev{
+  background:var(--paper); color:#1a1611; border:.4cqw solid var(--accent-2);
+  border-radius:.6cqw; padding:1.4cqh 1.4cqw; cursor:pointer;
+  display:flex; flex-direction:column; gap:.8cqh; position:relative;
+  box-shadow:0 .6cqw 1.6cqw rgba(0,0,0,.5); transition:.12s;
+}
+.ev:hover{translate:0 -.6cqh;}
+.ev.sel{outline:.5cqw solid var(--accent); outline-offset:.4cqw; translate:0 -.6cqh;}
+.ev .no{position:absolute; right:.8cqw; top:.6cqh; font-size:1.4cqw; font-weight:900; opacity:.45;}
+.ev .nm{font-size:1.9cqw; font-weight:900; line-height:1.25;}
+.ev .ds{font-size:1.45cqw; line-height:1.4; opacity:.8;}
+.ev .thumb{height:9cqh; background:#ddd7c6; border-radius:.3cqw; display:grid; place-items:center; overflow:hidden;}
+.ev .thumb img{width:100%; height:100%; object-fit:cover;}
+.ev .thumb svg{height:80%;}
+
+/* ===================== 選択肢 ===================== */
+.choices{
+  position:absolute; inset:0; z-index:55; display:none;
+  flex-direction:column; justify-content:center; align-items:center; gap:2cqh;
+  background:rgba(4,8,16,.72);
+}
+.choices.show{display:flex;}
+.choices .q{font-size:3.2cqw; font-weight:900; text-align:center; max-width:80cqw; margin-bottom:2cqh;}
+.choice{
+  min-width:56cqw; max-width:80cqw; padding:1.8cqh 3cqw; cursor:pointer;
+  font-size:2.6cqw; font-weight:700; text-align:center;
+  background:linear-gradient(180deg, var(--navy-2), var(--navy));
+  border:.4cqw solid var(--frame); border-radius:.6cqw; transition:.12s;
+}
+.choice:hover,.choice.sel{background:linear-gradient(180deg,var(--accent),var(--accent-2)); color:#1a1205;}
+.choice .k{display:inline-block; width:2.6cqw; opacity:.6; font-weight:900;}
+
+/* ===================== メニュー / 目次 ===================== */
+.menu{
+  position:absolute; inset:0; z-index:80; display:none;
+  background:rgba(2,5,12,.985); padding:6cqh 8cqw; flex-direction:column; gap:2cqh;
+}
+.menu.show{display:flex;}
+.menu h3{font-size:2.6cqw; color:var(--accent); letter-spacing:.2em; font-weight:900;}
+.menu ol{list-style:none; display:flex; flex-flow:column wrap; align-content:flex-start;
+  max-height:58cqh; gap:.5cqh 3cqw; overflow:hidden;}
+.menu li{
+  font-size:1.9cqw; padding:.6cqh 1.4cqw; cursor:pointer; border-radius:.4cqw;
+  border-left:.5cqw solid transparent; display:flex; gap:1.2cqw; width:38cqw;
+}
+.menu li:hover{background:rgba(255,255,255,.08); border-left-color:var(--accent);}
+.menu li.cur{background:rgba(240,194,60,.16); border-left-color:var(--accent);}
+.menu li .t{opacity:.5; width:6cqw; font-variant-numeric:tabular-nums;}
+.menu .keys{font-size:1.5cqw; opacity:.6; line-height:1.8; border-top:.15cqw solid rgba(255,255,255,.2); padding-top:1.5cqh;}
+.menu .keys kbd{
+  background:#fff2; border:.15cqw solid #fff5; border-radius:.3cqw;
+  padding:0 .6cqw; font-family:var(--font); font-weight:700;
+}
+
+/* ===================== 発表者ノート ===================== */
+.notes{
+  position:absolute; left:2.5cqw; right:2.5cqw; bottom:30cqh; z-index:70;
+  background:rgba(255,245,200,.94); color:#231b06; border-radius:.5cqw;
+  padding:1.4cqh 2cqw; font-size:1.8cqw; line-height:1.5; display:none;
+  box-shadow:0 1cqw 2cqw rgba(0,0,0,.5); font-weight:600;
+}
+.notes.show{display:block;}
+.notes b{color:#8a5b00;}
+.timer{
+  position:absolute; left:50%; top:1.5cqh; translate:-50% 0; z-index:70;
+  font-size:1.8cqw; font-weight:900; font-variant-numeric:tabular-nums;
+  background:rgba(0,0,0,.6); padding:.4cqh 1.4cqw; border-radius:99px; display:none;
+  letter-spacing:.1em;
+}
+.timer.show{display:block;}
+
+/* ===================== タイトル / 結審 ===================== */
+.title-card{
+  position:absolute; inset:0; z-index:30; display:none;
+  flex-direction:column; justify-content:center; align-items:center; gap:2.5cqh;
+  background:radial-gradient(80% 80% at 50% 40%, var(--navy-2), var(--ink) 75%);
+  text-align:center; padding:0 8cqw;
+}
+.title-card.show{display:flex;}
+.title-card .kicker{font-size:2cqw; letter-spacing:.5em; color:var(--accent); font-weight:900;}
+.title-card h1{font-size:7cqw; font-weight:900; line-height:1.2;
+  -webkit-text-stroke:.5cqw var(--ink); paint-order:stroke fill;
+  text-shadow:0 .6cqw 0 var(--accent-2);}
+.title-card .sub{font-size:2.4cqw; opacity:.85; font-weight:600;}
+.title-card .go{
+  margin-top:2cqh; font-size:2cqw; font-weight:900; padding:1.2cqh 3cqw;
+  border:.35cqw solid var(--accent); border-radius:99px; color:var(--accent);
+  animation:blink 1.6s steps(2) infinite;
+}
+.verdict-list{display:flex; flex-direction:column; gap:1.4cqh; text-align:left; max-width:74cqw;}
+.verdict-list li{font-size:2.5cqw; font-weight:700; list-style:none; padding-left:3cqw; position:relative;}
+.verdict-list li::before{content:"✔"; position:absolute; left:0; color:var(--testimony);}
+
+.toast{
+  position:absolute; left:50%; top:22cqh; translate:-50% 0; z-index:75;
+  background:var(--paper); color:#1a1611; font-size:2.2cqw; font-weight:900;
+  padding:1cqh 2.4cqw; border-radius:.4cqw; border:.35cqw solid var(--accent-2);
+  box-shadow:0 .8cqw 2cqw rgba(0,0,0,.5); opacity:0; transition:.2s;
+}
+.toast.show{opacity:1;}
+
+/* 小画面（スマホで下見する用）: stage はそのまま縮む。文字は cqw なので崩れない */
+@media (max-width:480px){ .menu .keys{display:none;} }
+
+/* --- タイプライター（HTMLタグを保ったまま1文字ずつ出す） --- */
+.line .c{visibility:hidden;}
+.line .c.on{visibility:visible;}
+.statement-mark{
+  position:absolute; right:2.2cqw; top:-2.6cqh; font-size:1.7cqw; font-weight:900;
+  letter-spacing:.2em; color:var(--frame); opacity:.7;
+}
+.statement-mark.broken{color:var(--damage); opacity:1;}
+.hint{
+  position:absolute; right:2.5cqw; bottom:29.4cqh; z-index:45; text-align:right;
+  font-size:1.7cqw; font-weight:700; color:var(--press);
+  background:rgba(0,0,0,.6); padding:.6cqh 1.6cqw; border-radius:.4cqw;
+  display:none;
+}
+.hint.show{display:block;}

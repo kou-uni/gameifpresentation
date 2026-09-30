@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "title": "第1審 — ここに争点を書く",
+    "subtitle": "GAMEIF PRESENTATION / CASE 00X",
+    "theme": "court",
+    "lifeMax": 5,
+    "minutes": 10,
+    "learning": {
+      "goal": "この発表が終わったとき、聴衆が何をできるようになっていてほしいか",
+      "audience": "誰に向けて話すのか"
+    }
+  },
+
+  "cast": {
+    "judge": { "name": "裁判長", "art": "judge" },
+    "hero":  { "name": "弁護人 ○○", "art": "hero", "side": "left" },
+    "foe":   { "name": "検事 ○○", "art": "prosecutor", "side": "right" },
+    "wit":   { "name": "証人 ○○", "art": "witness" },
+    "aide":  { "name": "助手 ○○", "art": "assistant", "side": "left" }
+  },
+
+  "evidence": [
+    { "id": "ev-1", "name": "証拠品の名前", "icon": "chart",
+      "desc": "一覧に出る短い説明",
+      "detail": "つきつける前に読ませたい中身。数字は出典と年を書く。" },
+    { "id": "ev-2", "name": "もうひとつの根拠", "icon": "quote",
+      "desc": "短い説明", "detail": "中身" }
+  ],
+
+  "scenes": [
+    { "type": "title", "chapter": "開廷",
+      "title": "争点を一行で", "sub": "被告人：○○",
+      "note": "最初に「今日はみんなが弁護人」と役割を渡す" },
+
+    { "type": "dialogue", "chapter": "導入", "bg": "courtroom",
+      "lines": [
+        { "who": "judge", "pose": "normal", "sfx": "gavel", "text": "開廷する。" },
+        { "who": "foe", "pose": "confident", "text": "検察の主張は<b>○○</b>です。" },
+        { "who": "hero", "pose": "confident", "text": "弁護人は争います。" }
+      ] },
+
+    { "type": "slide", "chapter": "今日の争点", "kicker": "ISSUE",
+      "title": "見出し",
+      "bullets": ["論点1", "論点2", "論点3"],
+      "footnote": "出典",
+      "note": "スライドは休廷。長居しない" },
+
+    { "type": "evidence", "chapter": "証拠の開示", "give": ["ev-1", "ev-2"],
+      "lines": [ { "who": "judge", "text": "法廷記録に加える。" } ] },
+
+    { "type": "testimony", "chapter": "証言", "banner": "証言 — 通説",
+      "bg": "stand", "witness": "wit", "penalty": 1, "shout": "異議あり！",
+      "intro": [ { "who": "foe", "text": "証人、述べてください。" } ],
+      "statements": [
+        { "text": "正しいことを言わせる（ここは潰さない）", "pose": "confident",
+          "press": [
+            { "who": "hero", "style": "press", "text": "掘る質問" },
+            { "who": "wit", "text": "答え" }
+          ] },
+        { "text": "ここで<b>飛躍</b>させる。これがムジュン", "pose": "confident",
+          "weak": {
+            "evidence": "ev-1",
+            "onCorrect": [
+              { "who": "hero", "pose": "point", "flash": true, "text": "<b>ここが学びの核</b>" },
+              { "who": "wit", "pose": "damage", "sfx": "damage", "shake": true, "text": "な……！" },
+              { "who": "judge", "sfx": "gavel", "text": "本法廷はそう認定する。" }
+            ],
+            "onWrong": [
+              { "who": "foe", "pose": "confident", "text": "的が外れている。" }
+            ]
+          } }
+      ] },
+
+    { "type": "choice", "chapter": "最終弁論",
+      "question": "聴衆に決めさせる問い",
+      "note": "必ず挙手させてから押す",
+      "options": [
+        { "text": "外れの選択肢", "correct": false,
+          "reply": [ { "who": "judge", "text": "それは違う。" } ] },
+        { "text": "正解の選択肢", "correct": true, "shout": "異議なし！",
+          "reply": [ { "who": "hero", "text": "それが正解だ。" } ] }
+      ] },
+
+    { "type": "verdict", "chapter": "判決", "kicker": "VERDICT",
+      "title": "本日の認定事実",
+      "takeaways": ["持ち帰ってほしいこと1", "2", "3"],
+      "note": "写真を撮らせる時間を20秒取る" }
+  ]
+}
