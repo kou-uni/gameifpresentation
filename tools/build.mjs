@@ -38,6 +38,35 @@ function inlineAssets(caseObj) {
   return { json: out, missing };
 }
 
+/* Artifact（claude.ai）用: doctype/html/head/body を持たない本体だけの版。
+   外からスマホで開きたいときの入口。外部参照ゼロなので CSP にも当たらない。 */
+function buildArtifact(casePath) {
+  const caseObj = JSON.parse(read(casePath));
+  const { json } = inlineAssets(caseObj);
+  const css = read('engine/theme.css');
+  const js = ['engine/sfx.js', 'engine/art.js', 'engine/engine.js'].map(read).join('\n');
+  const name = (caseObj.meta && caseObj.meta.artifactTitle)
+    || (caseObj.meta && caseObj.meta.title || basename(casePath, '.json')).replace(/<[^>]+>/g, '');
+  const html = `<title>${name}</title>
+<style>
+${css}
+</style>
+<div id="stage"></div>
+<script>
+${js}
+</script>
+<script id="gif-case" type="application/json">${json.replace(/<\//g, '<\\/')}</script>
+<script>
+window.GIF_CASE = JSON.parse(document.getElementById('gif-case').textContent);
+GIF.boot();
+</script>
+`;
+  mkdirSync(join(ROOT, 'dist'), { recursive: true });
+  const outName = basename(casePath, '.json') + '.artifact.html';
+  writeFileSync(join(ROOT, 'dist', outName), html, 'utf8');
+  console.log(`  dist/${outName}  ${(Buffer.byteLength(html)/1024).toFixed(0)} KB  (artifact用)`);
+}
+
 function buildOne(casePath) {
   const caseObj = JSON.parse(read(casePath));
   const { json, missing } = inlineAssets(caseObj);
@@ -81,12 +110,15 @@ GIF.boot();
   return outName;
 }
 
-const args = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const artifactMode = argv.includes('--artifact');
+const args = argv.filter(a => a !== '--artifact');
 const targets = args.length
   ? args
   : readdirSync(join(ROOT, 'cases')).filter(f => f.endsWith('.json') && f !== 'index.json').map(f => 'cases/' + f);
 
 console.log('GAMEIF PRESENTATION — single-file build');
+if (artifactMode) { targets.forEach(buildArtifact); process.exit(0); }
 const built = targets.map(buildOne);
 
 /* dist/index.html = 1枚HTMLの一覧（配布フォルダだけ渡しても迷わないように） */

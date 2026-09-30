@@ -48,6 +48,16 @@ CSS・JS・ケース・`assets/` の画像まで全部インラインなので�
 
 登壇当日はこれをデスクトップに置いてダブルクリック。これが一番事故りません。
 
+## 外から見たい / スマホで確認したい
+
+```bash
+npm run build:artifact        # dist/<名前>.artifact.html
+```
+
+doctype と `<html>/<head>/<body>` を持たない本体だけの版が出ます。
+これを Claude の Artifact として publish すると、URL が1本もらえて
+スマホでも会場のPCでも開けます（外部参照ゼロなので CSP に当たりません）。
+
 ---
 
 ## 数字の賞味期限

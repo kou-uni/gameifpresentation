@@ -50,8 +50,9 @@ npm start           # → http://localhost:8787
 ```bash
 npm run new -- my-topic "第2審 — 〇〇は本当か"
 # cases/my-topic.json を書く
-npm run check       # 当日事故る設計ミスを検査
-npm run build       # dist/my-topic.html（1枚・オフラインで動く）
+npm run check          # 当日事故る設計ミスを検査
+npm run build          # dist/my-topic.html（1枚・オフラインで動く）
+npm run build:artifact # Artifact として publish する版（外から / スマホで開く）
 ```
 
 - 設計の考え方 → **[docs/TONE-AND-MANNER.md](docs/TONE-AND-MANNER.md)**
