@@ -247,23 +247,30 @@ turned about 20 degrees. Framed from the waist up. Normal lens.
 
 そのまま貼れる完成形。これが基準になり、左右はここからの差分です。
 
+> **必ず新しいチャットで出してください。** キャラの会話を続けたまま出すと、
+> 縦長（2:3）とマゼンタ背景の設定を引き継いで、縦long の立ち絵用背景が出ます。
+> **アスペクトは先頭に書きます。** 後ろに置くと直前の設定に負けます。
+
 ```
-Japanese anime visual-novel background art, clean cel shading, bold but sparse
-outlines, warm even overhead lighting, simple flat rendering. No characters, no
-people, no text, no letters, no signage, no logos, no watermark.
+Wide 16:9 landscape image, 1920 x 1080. Landscape orientation, NOT portrait.
 
-SCENE: the interior of a modern courtroom seen straight on from the middle of the
-floor. Dark polished wood panelling across the back wall, a raised judge's bench
-spanning the upper centre, a tall circular crest medallion mounted on the wall
-above it, a low wooden railing running across the lower third. Deep warm browns
-and muted gold.
+FLAT 2D ANIME BACKGROUND ILLUSTRATION, hand-drawn anime art style, cel shaded with
+large areas of flat colour and clean linework. NOT a 3D render, NOT CGI, NOT
+photorealistic, no ray tracing, no realistic wood grain texture, no photographic
+depth of field.
 
-COMPOSITION: symmetrical, one-point perspective, horizon at the middle. Keep the
-lower third and the centre of the frame visually calm and uncluttered — a dialogue
-box and a character will be placed on top of them. Slightly desaturated and a
-little darker than normal so bright character art stays readable over it.
+SCENE: the interior of a stylised courtroom seen straight on from the middle of the
+floor. Dark wood panelling across the back wall, a raised judge's bench spanning the
+upper centre, a round crest medallion on the wall above it, a low wooden railing
+across the lower third. Deep warm browns and muted gold, simplified into flat shapes.
 
-ASPECT: 16:9, 1920x1080. No border, no frame, no vignette.
+COMPOSITION: symmetrical one-point perspective, horizon near the middle. Leave the
+lower third and the centre of the frame calm and uncluttered — a dialogue box and a
+character will be placed on top. Slightly desaturated and a little darker so bright
+character art reads over it.
+
+No characters, no people, no text, no letters, no signage, no logos, no watermark,
+no border, no frame.
 ```
 
 左右の切り返し用は、`SCENE` と `COMPOSITION` だけ差し替えます。
@@ -377,6 +384,8 @@ assets/
 | 真正面すぎて平板 | `Turn the body 30 degrees into a three-quarter view and lean it forward.` |
 | 煽りすぎて見上げる画になる | `Eye level camera. No low angle, no wide-angle distortion.` |
 | 腕が相手と逆を向いている | **描き直さない。** JSON で `"point": { "src": "...", "flip": true }` |
+| 背景が縦長で出る | 新しいチャットで、**先頭に** `Wide 16:9 landscape image, 1920 x 1080. Landscape orientation, NOT portrait.` |
+| 背景が写実・3DCGになる | `FLAT 2D ANIME BACKGROUND ILLUSTRATION. NOT a 3D render, NOT CGI, NOT photorealistic, no realistic wood grain texture.` |
 | 塗りが厚い／油絵風 | `Flat two-tone cel shading only. No soft gradients, no painterly texture.` |
 | 毎回デザインが変わる | 参照画像を添付し `Keep the exact same character design as the attached reference.` |
 | 文字が入る | `No text, no letters, no signage anywhere in the image.` |
