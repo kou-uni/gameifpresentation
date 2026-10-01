@@ -25,8 +25,8 @@
   var SHOT = {
     wide:    { s: 1.00, y: 0,    oy: 50, dutch: 0,    tiltX: 0 },   // 法廷全景
     mid:     { s: 1.18, y: 2.0,  oy: 56, dutch: 0,    tiltX: 0 },   // 既定。バストアップ
-    close:   { s: 1.34, y: 2.0,  oy: 66, dutch: 0,    tiltX: 0 },   // 寄り。指摘・決め台詞
-    extreme: { s: 1.70, y: 2.0,  oy: 64, dutch: 0,    tiltX: 0 },   // 極寄り。異議あり
+    close:   { s: 1.28, y: 2.0,  oy: 62, dutch: 0,    tiltX: 0 },   // 寄り。指摘・決め台詞
+    extreme: { s: 1.52, y: 2.0,  oy: 60, dutch: 0,    tiltX: 0 },   // 極寄り。異議あり
     low:     { s: 1.26, y: 0,    oy: 78, dutch: 0,    tiltX: 6 },   // 煽り。追い詰める
     high:    { s: 1.10, y: -4.0, oy: 34, dutch: 0,    tiltX: -5 },  // 俯瞰。突き放す
     think:   { s: 1.40, y: 2.0,  oy: 62, dutch: -2.4, tiltX: 0 },   // 検討。わずかに傾ける
@@ -37,10 +37,10 @@
        カメラが詰めすぎるとジェスチャーが画面外に出て、決めが消える。 */
     /* 指差しは「目線の高さ」。絵のほうが角度を持っているので、
        カメラまで煽ると二重にかかって絵と喧嘩する。傾きだけ少し足す。 */
-    point:   { s: 1.30, y: 0,    oy: 76, dutch: -2.0, tiltX: 0 },   // 指差し
-    slam:    { s: 1.36, y: 0,    oy: 82, dutch:  2.5, tiltX: 4 },   // 机を叩く
-    shock:   { s: 1.38, y: 1.0,  oy: 70, dutch:  0,   tiltX: 0 },   // ガーン
-    stare:   { s: 1.22, y: 1.0,  oy: 60, dutch:  0,   tiltX: 0 }    // 睨み合い
+    point:   { s: 1.14, y: 0,    oy: 62, dutch: -2.0, tiltX: 0 },   // 指差し
+    slam:    { s: 1.20, y: 0,    oy: 70, dutch:  2.5, tiltX: 4 },   // 机を叩く
+    shock:   { s: 1.26, y: 1.0,  oy: 62, dutch:  0,   tiltX: 0 },   // ガーン
+    stare:   { s: 1.18, y: 1.0,  oy: 58, dutch:  0,   tiltX: 0 }    // 睨み合い
   };
 
   /* ---- 視点（どの席から見ているか）= 背景のヨー角 -------------------- */

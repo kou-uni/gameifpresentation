@@ -69,9 +69,19 @@
     (this.meta.startEvidence || []).forEach(function (id) { this.owned[id] = true; }, this);
     if (this.meta.allEvidenceFromStart) this.evidence.forEach(function (e) { this.owned[e.id] = true; }, this);
 
+    this.base = data.__base || null;
+
     this.build();
     this.bind();
   }
+
+  /* 画像のパスは「ケースJSONの置き場所」からの相対で書く。
+     ページ基準で解決すると player/ の下を探して 404 になる（実際にやった）。 */
+  Player.prototype.asset = function (p) {
+    if (!p || !this.base) return p;
+    if (/^(data:|blob:|https?:|\/)/.test(p)) return p;
+    try { return new URL(p, this.base).href; } catch (e) { return p; }
+  };
 
   /* ---------------------------------------------------------------- DOM -- */
   Player.prototype.build = function () {
@@ -275,7 +285,7 @@
     if (angle) this._bgAngle = angle;
     this.el.bg.dataset.bg = name;
     var bgs = this.meta.backgrounds || {};
-    var src = bgs[name + '@' + (angle || this._bgAngle || '')] || bgs[name];
+    var src = this.asset(bgs[name + '@' + (angle || this._bgAngle || '')] || bgs[name]);
     if (src) {
       this.el.bg.style.backgroundImage = 'url("' + src + '")';
       on(this.el.bg, 'img', true);
@@ -299,15 +309,25 @@
     if (!whoId) return;
     var def = this.cast[whoId]; if (!def) return;
     var wrap = h('div', 'actor ' + (side || def.side || 'center'));
-    if (def.img) {
-      /* poses は "path" でも {src, flip} でも書ける。
-         生成した絵が相手と逆を向いているときは flip:true で左右反転する。
-         向きのためだけに描き直すのは無駄なので。 */
-      var src = def.img, flip = !!def.flip;
-      var pv = def.poses && def.poses[pose];
-      if (typeof pv === 'string') src = pv;
-      else if (pv && pv.src) { src = pv.src; if (pv.flip != null) flip = !!pv.flip; }
-      var im = new Image(); im.src = src; im.alt = def.name || whoId;
+
+    /* 絵の解決順: そのポーズ専用の絵 → 役の既定の絵 → 生成SVG。
+       ポーズ単位で差し替わるので、point.png が1枚あるだけでも効きます。
+       読み込みに失敗したら黙って生成SVGへ落とす（当日に壊れた画像を出さない）。 */
+    var pv = def.poses && def.poses[pose];
+    var src = null, flip = !!def.flip;
+    if (typeof pv === 'string') src = pv;
+    else if (pv && pv.src) { src = pv.src; if (pv.flip != null) flip = !!pv.flip; }
+    else if (def.img) src = def.img;
+    src = this.asset(src);
+
+    if (src) {
+      var im = new Image();
+      im.alt = def.name || whoId;
+      im.onerror = function () {
+        wrap.innerHTML = G.art.portrait(def, pose || 'normal');
+        wrap.classList.remove('flip');
+      };
+      im.src = src;
       if (flip) wrap.classList.add('flip');
       wrap.appendChild(im);
     } else {
@@ -554,7 +574,7 @@
     var s = this.el.slide, html = '';
     if (sc.title) html += '<h2>' + (sc.kicker ? '<small>' + sc.kicker + '</small>' : '') + sc.title + '</h2>';
     if (sc.big)   html += '<div class="big">' + sc.big + '</div>';
-    if (sc.image) html += '<figure><img src="' + sc.image.src + '" alt="">' +
+    if (sc.image) html += '<figure><img src="' + this.asset(sc.image.src) + '" alt="">' +
                           (sc.image.caption ? '<figcaption>' + sc.image.caption + '</figcaption>' : '') + '</figure>';
     if (sc.bullets && sc.bullets.length) {
       html += '<ul>' + sc.bullets.map(function (b, i) {
@@ -812,7 +832,7 @@
     var r = this.el.record, e = this.r.list[i];
     this.r.i = i;
     r.querySelector('.ev-face').innerHTML =
-      e.img ? '<img src="' + e.img + '" alt="">' : G.art.evidenceIcon(e.icon);
+      e.img ? '<img src="' + this.asset(e.img) + '" alt="">' : G.art.evidenceIcon(e.icon);
     r.querySelector('.ev-info').innerHTML =
       '<div class="no">証拠品 ' + (i + 1) + ' / ' + this.r.list.length + '</div>' +
       '<div class="nm">' + e.name + '</div>' +
@@ -912,7 +932,8 @@
     var qs = new URLSearchParams(location.search);
     var start = qs.has('scene') ? parseInt(qs.get('scene'), 10) : null;
 
-    function run(data) {
+    function run(data, baseUrl) {
+      if (baseUrl) data.__base = new URL(baseUrl, location.href).href;
       var p = new Player(root, data);
       G.player = p;
       if (qs.get('mute') === '1') G.sfx.mute(true);
@@ -934,6 +955,6 @@
     fetch(url).then(function (r) {
       if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
       return r.json();
-    }).then(run).catch(function (err) { fail(String(err)); });
+    }).then(function (d) { run(d, url); }).catch(function (err) { fail(String(err)); });
   };
 })(window.GIF = window.GIF || {});

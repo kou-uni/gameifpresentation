@@ -40,8 +40,11 @@
   "name": "弁護人 ミライ",     // 名前プレートに出る文字
   "art":  "hero",              // 立ち絵のプリセット
   "side": "left",              // left / center / right
-  "img":  "assets/mirai.png",  // 画像を使うならこれ（art より優先）
-  "poses": { "confident": "assets/mirai-confident.png" },
+  "img":  "../assets/mirai.png",  // 画像（art より優先。無くてもよい）
+  "poses": {                       // ポーズ単位で差し替え。1枚からでも効く
+    "confident": "../assets/mirai-confident.png",
+    "point": { "src": "../assets/mirai-point.png", "flip": true }  // 左右反転
+  },
   "outfit": "#1d3a8f", "hairColor": "#1a1a22",
   "tie": "#d33", "skin": "#f6d5b8", "hair": "spike"
 }
@@ -119,6 +122,11 @@
 
 > **絵の角度は、カメラでは作れません。** 指差しの煽りは「そういう角度で描かれた絵」が要ります。
 > 生成プロンプトは [ILLUSTRATION-PROMPTS.md](ILLUSTRATION-PROMPTS.md) に用途ごとに置いてあります。
+
+> **画像のパスは、ケースJSONから見た相対で書きます。** ケースは `cases/` にあるので
+> リポジトリ直下の `assets/` へは `../assets/...`。取り込みは `npm run art -- <画像> <スロット> <ポーズ>`
+> （マゼンタ背景の除去と余白の切り詰めまで自動）。詳しくは
+> [ILLUSTRATION-PROMPTS.md](ILLUSTRATION-PROMPTS.md)。
 
 ## lines（セリフの並び）— 共通
 

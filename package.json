@@ -11,7 +11,8 @@
     "check": "node tools/check.mjs",
     "check:portable": "node tools/check-portable.mjs",
     "smoke": "node tools/smoke.mjs",
-    "build:artifact": "node tools/build.mjs --artifact"
+    "build:artifact": "node tools/build.mjs --artifact",
+    "art": "node tools/art-import.mjs"
   },
   "license": "MIT",
   "engines": {

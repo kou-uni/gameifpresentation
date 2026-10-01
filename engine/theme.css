@@ -199,7 +199,7 @@ body{
   opacity:0; transition:opacity .18s;
 }
 .actor.show{opacity:1;}
-.actor.left{left:26%;} .actor.right{left:74%;}
+.actor.left{left:33%;} .actor.right{left:67%;}
 .actor img,.actor svg{height:100%; width:auto; display:block;
   filter:drop-shadow(0 0 3cqw rgba(0,0,0,.55));}
 /* 生成した絵が相手と逆を向いているとき。描き直さずに向きだけ変える */

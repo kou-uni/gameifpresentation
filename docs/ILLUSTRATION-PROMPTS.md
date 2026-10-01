@@ -311,11 +311,11 @@ ASPECT: 16:9, 1920x1080.
 ```jsonc
 "meta": {
   "backgrounds": {
-    "courtroom":             "assets/bg/court-front.png",
-    "courtroom@defense":     "assets/bg/court-left.png",      // 弁護席の側から見たとき
-    "courtroom@prosecution": "assets/bg/court-right.png",     // 検察席の側から見たとき
-    "stand":                 "assets/bg/stand.png",
-    "gallery":               "assets/bg/gallery.png"
+    "courtroom":             "../assets/bg/court-front.png",
+    "courtroom@defense":     "../assets/bg/court-left.png",   // 弁護席の側から見たとき
+    "courtroom@prosecution": "../assets/bg/court-right.png",  // 検察席の側から見たとき
+    "stand":                 "../assets/bg/stand.png",
+    "gallery":               "../assets/bg/gallery.png"
   }
 }
 ```
@@ -340,6 +340,22 @@ bar chart visible on the top page>
 
 ## 6. 置き場所と、ケースJSONへの書き方
 
+### 取り込みは1コマンド
+
+生成した絵はマゼンタ背景のままで構いません。**背景の除去と余白の切り詰めは自動です。**
+
+```bash
+npm run art -- ~/Downloads/point.png a point
+#            ↑生成した画像      ↑スロット ↑ポーズ
+```
+
+`assets/chars/a/point.png` に置かれ、ケースJSONに書く行がそのまま出力されます。
+もともと透過している絵は `--keep-bg`、抜け残るときは `--tol=120` を足します。
+
+> **パスは「ケースJSONから見た相対」で書きます。** ケースは `cases/` にあるので、
+> リポジトリ直下の `assets/` へは `../assets/...` です。
+> ページ基準で書くと `player/` の下を探して 404 になります。
+
 ```
 assets/
   chars/
@@ -354,22 +370,25 @@ assets/
   "hero": {
     "name": "弁護人 ミライ",
     "side": "left",
-    "img": "assets/chars/a/normal.png",       // 既定の絵
+    "img": "../assets/chars/a/normal.png",    // 既定の絵（無くてもよい）
     "poses": {                                 // ポーズごとの差し替え
-      "talk":      "assets/chars/a/talk.png",
-      "confident": "assets/chars/a/confident.png",
-      "shock":     "assets/chars/a/shock.png",
+      "talk":      "../assets/chars/a/talk.png",
+      "confident": "../assets/chars/a/confident.png",
+      "shock":     "../assets/chars/a/shock.png",
       // 絵が相手と逆を向いているときは反転できる。描き直さなくていい
-      "point":     { "src": "assets/chars/a/point.png", "flip": true }
+      "point":     { "src": "../assets/chars/a/point.png", "flip": true }
     }
   }
 },
 "evidence": [
-  { "id":"ev-1", "name":"…", "img":"assets/ev/chart.png" }
+  { "id":"ev-1", "name":"…", "img":"../assets/ev/chart.png" }
 ]
 ```
 
-**無いポーズは `img` の絵に落ちます。** 落ちていることは `npm run check` が警告します。
+**絵が1枚でも効きます。** 用意したポーズだけ差し替わり、残りは生成SVGのままです。
+読み込みに失敗した絵も黙って生成SVGに落ちるので、当日に壊れた画像が出ることはありません。
+
+**無いポーズは `img` の絵、それも無ければ生成SVGに落ちます。** 落ちていることは `npm run check` が警告します。
 `npm run build` を通すと、画像は data URI として1枚HTMLに焼き込まれます。
 
 ---

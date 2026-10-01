@@ -22,7 +22,13 @@
     "hero": {
       "name": "弁護人 ミライ",
       "art": "hero",
-      "side": "left"
+      "side": "left",
+      "poses": {
+        "point": {
+          "src": "../assets/chars/a/point.png",
+          "flip": true
+        }
+      }
     },
     "himuro": {
       "name": "検事 ヒムロ",
