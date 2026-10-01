@@ -53,6 +53,13 @@
     this.evidence = (data.evidence || []).slice();
     this.scenes = data.scenes || [];
 
+    /* 進行モード。
+       story … 既定。→ だけで進む。つきつけは演出として自動で決まる。
+               会場で30人を待たせないため。発表のテンポはここで決まる。
+       quiz  … 聴衆に証拠を選ばせる。研修やテストとして使うとき。
+       ケースの meta.mode、または URL の ?mode=quiz で切り替える。 */
+    this.playMode = this.meta.mode === 'quiz' ? 'quiz' : 'story';
+
     this.lifeMax = this.meta.lifeMax == null ? 5 : this.meta.lifeMax;
     this.life = this.lifeMax;
     this.owned = {};
@@ -142,10 +149,11 @@
     this.el.toast = h('div', 'toast');
     this.el.shout = h('div', 'shout', '<span></span>');
     this.el.flash = h('div', 'flash');
+    this.el.presentCard = h('div', 'present-card');
     this.el.vignette = h('div', 'vignette');
     this.el.bars = h('div', 'bars', '<i></i><i></i>');
 
-    [cam, this.el.vignette, this.el.bars, this.el.banner, this.el.hint,
+    [cam, this.el.vignette, this.el.bars, this.el.presentCard, this.el.banner, this.el.hint,
      this.el.prevArrow, this.el.nextArrow, this.el.xebar,
      this.el.slide, this.el.title, tb, this.el.choices, this.el.record,
      this.el.notes, this.el.timer, this.el.toast, this.el.menu,
@@ -181,6 +189,7 @@
       if (k === 'r' || k === 'R')              { e.preventDefault(); return self.restart(); }
       if (k === '?' || k === '/')              { e.preventDefault(); return self.toggleMenu(); }
       if (k === 'h' || k === 'H')              { e.preventDefault(); return self.toggleNotes(); }
+      if (k === 'q' || k === 'Q')              { e.preventDefault(); return self.toggleMode(); }
 
       if (self.mode === 'menu')      return self.menuKey(e);
       if (self.mode === 'record')    return self.recordKey(e);
@@ -208,7 +217,10 @@
 
   /* ------------------------------------------------------------ HUD 系 -- */
   Player.prototype.renderLife = function () {
-    if (this.lifeMax <= 0) { this.el.life.innerHTML = ''; this.el.life.style.display = 'none'; return; }
+    if (this.lifeMax <= 0 || this.playMode === 'story') {
+      this.el.life.innerHTML = ''; this.el.life.style.display = 'none'; return;
+    }
+    this.el.life.style.display = '';
     var s = '';
     for (var i = 0; i < this.lifeMax; i++) s += '<div class="pip' + (i < this.life ? '' : ' off') + '"></div>';
     this.el.life.innerHTML = s;
@@ -244,12 +256,23 @@
     this.el.notes.innerHTML = txt ? '<b>NOTE</b> ' + txt : '';
     on(this.el.notes, 'show', this.notesOn && !!txt);
   };
+  /* 進行モードの切り替え。同じケースを、発表としても、研修のテストとしても回す。 */
+  Player.prototype.toggleMode = function () {
+    this.playMode = this.playMode === 'quiz' ? 'story' : 'quiz';
+    this.life = this.lifeMax; this.renderLife();
+    this.toast(this.playMode === 'quiz'
+      ? '🎮 クイズ形式 — 証拠は聴衆が選ぶ'
+      : '📖 ストーリー形式 — → だけで進む', 2000);
+    if (this.mode === 'statements') this.stmtShow(this.t.i);
+  };
+
   Player.prototype.fullscreen = function () {
     if (document.fullscreenElement) document.exitFullscreen();
     else (document.documentElement.requestFullscreen || function () {}).call(document.documentElement);
   };
   Player.prototype.restart = function () {
     this.life = this.lifeMax; this.owned = {}; this.stats = { wrong: 0, solved: 0 };
+    this._ended = false;
     (this.meta.startEvidence || []).forEach(function (id) { this.owned[id] = true; }, this);
     if (this.meta.allEvidenceFromStart) this.evidence.forEach(function (e) { this.owned[e.id] = true; }, this);
     this.renderLife(); this.goScene(0); this.toast('最初から', 900);
@@ -459,6 +482,7 @@
 
   /* ------------------------------------------------------------ 進行 -- */
   Player.prototype.next = function () {
+    if (this.mode === 'beat')       { var f = this._beatDone; return f && f(); }
     if (this.mode === 'line')       return this.advance();
     if (this.mode === 'statements') return this.stmtMove(1);
     if (this.mode === 'slide') {
@@ -488,6 +512,7 @@
   Player.prototype.goScene = function (i) {
     if (i < 0 || i >= this.scenes.length) return;
     this.sceneIndex = i;
+    this._ended = false;
     this.syncEvidence(i);
     var sc = this.scenes[i];
     this.mode = 'idle';
@@ -536,7 +561,9 @@
     t.innerHTML =
       '<div class="kicker">CASE CLOSED</div>' +
       '<h1>結審</h1>' +
-      '<div class="sub">お手つき ' + this.stats.wrong + ' 回 / ムジュン突破 ' + this.stats.solved + ' 回</div>' +
+      (this.playMode === 'quiz'
+        ? '<div class="sub">お手つき ' + this.stats.wrong + ' 回 / ムジュン突破 ' + this.stats.solved + ' 回</div>'
+        : '') +
       '<div class="go">R でもう一度　Esc で目次</div>';
     on(t, 'show', true);
   };
@@ -611,6 +638,7 @@
       sc: sc,
       i: 0,
       solved: {},
+      pressed_: {},
       need: sc.statements.filter(function (s) { return !!s.weak; }).length
     };
     if (this.t.need === 0) this.t.need = 0;
@@ -641,8 +669,11 @@
     on(this.el.hint, 'show', false);
     on(this.el.prevArrow, 'show', true);
     on(this.el.nextArrow, 'show', true);
-    on(this.el.xebar, 'show', true);
-    this.el.xebar.querySelector('.press').style.opacity = (st.press && st.press.length) ? '1' : '.4';
+    /* ストーリー形式では操作ボタンを出さない。→ だけで進むのが主旨なので、
+       押せるものが並んでいると、押さないといけない気にさせてしまう。 */
+    var quiz = this.playMode === 'quiz';
+    on(this.el.xebar, 'show', quiz);
+    if (quiz) this.el.xebar.querySelector('.press').style.opacity = (st.press && st.press.length) ? '1' : '.4';
 
     /* 証言中のカメラ。証言台は正面、わずかに寄る。
        突かれていない証言は「見られている」感じを作るため少し煽る。 */
@@ -654,7 +685,27 @@
 
   Player.prototype.stmtMove = function (d) {
     if (this.isTyping()) { this.typeDone(); return; }
-    var t = this.t, n = t.sc.statements.length, i = t.i + d;
+    var t = this.t, sc = t.sc, n = sc.statements.length, st = sc.statements[t.i], self = this;
+
+    /* ---- ストーリー形式: 一本道で進む ---- */
+    if (this.playMode === 'story' && d > 0) {
+      /* ゆさぶりの中身は、掘らせずにそのまま聞かせる。書いた深掘りが死なない */
+      if (st.press && st.press.length && !t.pressed_[t.i]) {
+        t.pressed_[t.i] = true;
+        G.sfx.play('press');
+        on(this.el.prevArrow, 'show', false); on(this.el.nextArrow, 'show', false);
+        return this.playLines(st.press, function () { self.stmtShow(t.i); });
+      }
+      /* ムジュンは自動で突く。選ばせない */
+      if (st.weak && !t.solved[t.i]) return this.present(st.weak.evidence, true);
+      /* 最後まで来たら次のシーンへ。証言はループしない */
+      if (t.i + 1 >= n) return this.nextScene();
+      G.sfx.play('move');
+      return this.stmtShow(t.i + 1);
+    }
+
+    /* ---- クイズ形式: 証言はループする（原作の作法） ---- */
+    var i = t.i + d;
     G.sfx.play('move');
     if (i >= n) { this.toast('証言をもう一度聞いた', 1200); i = 0; }
     if (i < 0) i = n - 1;
@@ -670,8 +721,39 @@
     this.playLines(st.press, function () { self.stmtShow(t.i); });
   };
 
-  /* 証拠をつきつける */
-  Player.prototype.present = function (evId) {
+  /* つきつける瞬間を「見せ場」にする。
+     ストーリー形式では選ばせないが、何を突きつけたかは必ず大きく出す。
+     省くと、学びの核がどの根拠で崩れたのか分からないまま進んでしまう。 */
+  Player.prototype.presentBeat = function (evId, cb) {
+    var self = this;
+    var e = this.evidence.filter(function (x) { return x.id === evId; })[0];
+    if (!e) return cb();
+    var el = this.el.presentCard;
+    el.innerHTML =
+      '<div class="pc-label">つきつける</div>' +
+      '<div class="pc-face">' +
+        (e.img ? '<img src="' + this.asset(e.img) + '" alt="">' : G.art.evidenceIcon(e.icon)) +
+      '</div>' +
+      '<div class="pc-name">' + e.name + '</div>' +
+      (e.desc ? '<div class="pc-desc">' + e.desc + '</div>' : '');
+    on(el, 'show', true);
+    on(this.root, 'overlay-open', true);
+    G.sfx.play('evidence');
+    this.mode = 'beat';
+    var finish = function () {
+      if (!self._beatDone) return;
+      self._beatDone = null;
+      clearTimeout(self._beatT);
+      on(el, 'show', false);
+      on(self.root, 'overlay-open', false);
+      cb();
+    };
+    this._beatDone = finish;
+    this._beatT = setTimeout(finish, 1500);
+  };
+
+  /* 証拠をつきつける。auto=true はストーリー形式の自動突き。 */
+  Player.prototype.present = function (evId, auto) {
     var t = this.t, sc = t.sc, st = sc.statements[t.i], self = this;
     on(this.el.record, 'show', false);
     on(this.root, 'overlay-open', false);
@@ -680,30 +762,39 @@
     on(this.el.nextArrow, 'show', false);
     on(this.el.xebar, 'show', false);
     this.mode = 'line';
-    if (st.weak && st.weak.evidence === evId) {
+
+    var hit = st.weak && st.weak.evidence === evId;
+
+    var breakthrough = function () {
       t.solved[t.i] = true;
-      this.stats.solved++;
+      self.stats.solved++;
       var solvedCount = Object.keys(t.solved).length;
-      this.shout(sc.shout || '異議あり！', function () {
+      self.shout(sc.shout || '異議あり！', function () {
         G.sfx.play('breakthrough');
         self.playLines(st.weak.onCorrect || [], function () {
           if (solvedCount >= t.need) self.nextScene();
           else self.stmtShow(t.i);
         });
       });
-    } else {
-      this.hurt(sc.penalty || 1);
-      var wrong = (st.weak && st.weak.onWrong) || sc.onWrong || [
-        { who: sc.judge || this.firstCastOf('judge'), pose: 'confident',
-          text: 'それのどこがムジュンだと言うのかね。<span class="hit">軽率</span>だぞ。' }
-      ];
-      if (this.life <= 0 && this.lifeMax > 0) {
-        this.toast('⚠️ 審理は続行された', 2200);
-        this.life = 1; this.renderLife();
-      }
-      this.playLines(wrong, function () { self.stmtShow(t.i); });
+    };
+
+    if (hit) {
+      if (auto) return this.presentBeat(evId, breakthrough);
+      return breakthrough();
     }
+
+    this.hurt(sc.penalty || 1);
+    var wrong = (st.weak && st.weak.onWrong) || sc.onWrong || [
+      { who: sc.judge || this.firstCastOf('judge'), pose: 'confident',
+        text: 'それのどこがムジュンだと言うのかね。<span class="hit">軽率</span>だぞ。' }
+    ];
+    if (this.life <= 0 && this.lifeMax > 0) {
+      this.toast('⚠️ 審理は続行された', 2200);
+      this.life = 1; this.renderLife();
+    }
+    this.playLines(wrong, function () { self.stmtShow(t.i); });
   };
+
   Player.prototype.firstCastOf = function (art) {
     var ids = Object.keys(this.cast);
     for (var i = 0; i < ids.length; i++) if (this.cast[ids[i]].art === art) return ids[i];
@@ -777,8 +868,9 @@
         '<div class="kicker">' + (sc.kicker || '判決') + '</div>' +
         '<h1>' + (sc.title || '今日の結論') + '</h1>' +
         '<ul class="verdict-list">' + (sc.takeaways || []).map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
-        '<div class="sub" style="font-size:1.7cqw;opacity:.6">お手つき ' + self.stats.wrong +
-          ' 回 / ムジュン突破 ' + self.stats.solved + ' 回</div>' +
+        (self.playMode === 'quiz'
+          ? '<div class="sub" style="font-size:1.7cqw;opacity:.6">お手つき ' + self.stats.wrong +
+            ' 回 / ムジュン突破 ' + self.stats.solved + ' 回</div>' : '') +
         (sc.cta ? '<div class="go">' + sc.cta + '</div>' : '');
       on(t, 'show', true);
       self.setNote(sc.note);
@@ -878,14 +970,21 @@
     this._prevMode2 = this.mode;
     this.mode = 'menu';
     var self = this, m = this.el.menu;
-    m.innerHTML = '<h3>目次 / CONTENTS</h3><ol></ol>' +
+    m.innerHTML = '<h3>目次 / CONTENTS' +
+      '<small style="font-size:.6em;letter-spacing:.1em;margin-left:2cqw;opacity:.75">' +
+      '進行: <b class="mode-now">' + (this.playMode === 'quiz' ? 'クイズ形式' : 'ストーリー形式') +
+      '</b>　<span class="mode-sw" style="text-decoration:underline;cursor:pointer">' +
+      (this.playMode === 'quiz' ? 'ストーリー形式に切り替え' : 'クイズ形式に切り替え') +
+      '</span>（<kbd>Q</kbd>）</small></h3><ol></ol>' +
       '<div class="keys">' +
       '<kbd>Space</kbd><kbd>→</kbd> 進む　<kbd>←</kbd> 戻る　' +
       '<kbd>E</kbd> 法廷記録（証拠をつきつける）　<kbd>P</kbd> ゆさぶる<br>' +
-      '<kbd>H</kbd> 発表者ノート　<kbd>T</kbd> タイマー　<kbd>M</kbd> 消音　' +
+      '<kbd>Q</kbd> 進行モード切替　<kbd>H</kbd> 発表者ノート　<kbd>T</kbd> タイマー　<kbd>M</kbd> 消音　' +
       '<kbd>F</kbd> 全画面　<kbd>R</kbd> 最初から　<kbd>Esc</kbd> この画面<br>' +
       'クリッカーは <kbd>→</kbd><kbd>←</kbd> だけで進行できます。' +
       '</div>';
+    var sw = m.querySelector('.mode-sw');
+    if (sw) sw.addEventListener('click', function (e) { e.stopPropagation(); self.toggleMode(); self.closeMenu(); });
     var ol = m.querySelector('ol');
     this.scenes.forEach(function (sc, i) {
       var label = sc.chapter || sc.title || sc.question || ({
@@ -936,6 +1035,8 @@
       if (baseUrl) data.__base = new URL(baseUrl, location.href).href;
       var p = new Player(root, data);
       G.player = p;
+      var qm = qs.get('mode');
+      if (qm === 'quiz' || qm === 'story') { p.playMode = qm; p.renderLife(); }
       if (qs.get('mute') === '1') G.sfx.mute(true);
       if (qs.get('notes') === '1') p.toggleNotes();
       if (qs.get('timer') === '1') p.toggleTimer();

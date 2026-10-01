@@ -29,6 +29,8 @@ function checkCase(file) {
   const W = (m) => warns.push(m);
 
   if (!d.meta?.title) W('meta.title がない');
+  if (d.meta?.mode && !['story', 'quiz'].includes(d.meta.mode))
+    E(`meta.mode "${d.meta.mode}" は未知（story / quiz）`);
   if (!d.meta?.learning?.goal) W('meta.learning.goal がない — 何を学ばせたいのか書く');
   if (!Array.isArray(d.scenes) || !d.scenes.length) { E('scenes が空'); return report(file, errs, warns); }
 
@@ -144,7 +146,11 @@ function checkCase(file) {
   missingPose.forEach(k => W(`cast.${k.split(':')[0]}.poses に "${k.split(':')[1]}" の絵がない — 既定の絵に落ちます`));
   if (!hasVerdict) W('verdict シーンがない — 学びを回収せずに終わる');
   if (!testimonyCount) W('testimony が1つもない — これは法廷型ではなく普通のスライド');
-  if (interactions < 2) W(`聴衆が手を動かす場面が ${interactions} 回 — ゲームとして薄い（3回以上を目安に）`);
+  const quizMode = d.meta?.mode === 'quiz';
+  if (quizMode && interactions < 2)
+    W(`クイズ形式なのに、聴衆が手を動かす場面が ${interactions} 回 — 薄い（3回以上を目安に）`);
+  if (!quizMode && interactions === 0)
+    W('ムジュンも選択肢も無い — ストーリー形式でも、突く瞬間が無いと普通のスライド');
 
   /* 発表者ノートの有無 */
   const notes = JSON.stringify(d).match(/"note":/g)?.length || 0;

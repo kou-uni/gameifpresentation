@@ -16,13 +16,21 @@
   h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.15;font-weight:900;margin-bottom:1.2rem}
   header p{opacity:.8;line-height:1.8;font-size:1rem;max-width:44rem}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1.4rem;max-width:74rem}
-  a.card{display:block;text-decoration:none;color:inherit;background:rgba(255,255,255,.055);
-    border:1px solid rgba(255,255,255,.14);border-radius:.8rem;padding:1.6rem;transition:.15s}
-  a.card:hover{background:rgba(240,194,60,.14);border-color:var(--accent);transform:translateY(-3px)}
-  a.card .no{font-size:.72rem;letter-spacing:.3em;color:var(--accent);font-weight:900}
-  a.card h2{font-size:1.28rem;margin:.6rem 0 .5rem;line-height:1.35;font-weight:900}
-  a.card p{font-size:.86rem;opacity:.75;line-height:1.7}
-  a.card .tag{display:inline-block;margin-top:1rem;font-size:.7rem;letter-spacing:.14em;
+  .card{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);
+    border-radius:.8rem;padding:1.6rem;transition:.15s}
+  .card:hover{border-color:var(--accent)}
+  .card>a{display:block;text-decoration:none;color:inherit}
+  .card .no{font-size:.72rem;letter-spacing:.3em;color:var(--accent);font-weight:900}
+  .card h2{font-size:1.28rem;margin:.6rem 0 .5rem;line-height:1.35;font-weight:900}
+  .card p{font-size:.86rem;opacity:.75;line-height:1.7}
+  .modes{display:flex;gap:.6rem;margin-top:1.1rem}
+  .modes .m{flex:1;text-align:center;text-decoration:none;color:inherit;font-size:.82rem;
+    font-weight:700;padding:.6rem .4rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.04);transition:.12s;line-height:1.5}
+  .modes .m:hover{background:var(--accent);color:#1a1205;border-color:var(--accent)}
+  .modes .m small{display:block;font-size:.66rem;font-weight:400;opacity:.65}
+  .modes .m:hover small{opacity:.8}
+  .card .tag{display:inline-block;margin-top:1rem;font-size:.7rem;letter-spacing:.14em;
     border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:.2rem .7rem;opacity:.8}
   footer{margin-top:7vh;font-size:.82rem;opacity:.6;line-height:1.9;max-width:52rem}
   footer a{color:var(--accent)}
@@ -40,8 +48,10 @@
 <div class="grid" id="grid"></div>
 
 <footer>
-  操作は <kbd>→</kbd> 進む / <kbd>←</kbd> 戻る / <kbd>E</kbd> 法廷記録 / <kbd>P</kbd> ゆさぶる /
-  <kbd>H</kbd> 発表者ノート / <kbd>Esc</kbd> 目次。クリッカーの <kbd>→</kbd><kbd>←</kbd> だけでも通せます。<br>
+  操作は <kbd>→</kbd> 進む / <kbd>←</kbd> 戻る / <kbd>Q</kbd> 進行形式の切替 /
+  <kbd>H</kbd> 発表者ノート / <kbd>Esc</kbd> 目次。<br>
+  <b>ストーリー形式なら <kbd>→</kbd> だけで最後まで通せます。</b>
+  クイズ形式では <kbd>E</kbd> で証拠をつきつけ、<kbd>P</kbd> でゆさぶります。<br>
   ケースの書き方は <a href="docs/FORMAT.md">docs/FORMAT.md</a>、
   トンマナの決め方は <a href="docs/TONE-AND-MANNER.md">docs/TONE-AND-MANNER.md</a>。
 </footer>
@@ -49,11 +59,17 @@
 <script>
 fetch('cases/index.json').then(r=>r.json()).then(list=>{
   document.getElementById('grid').innerHTML = list.map((c,i)=>
-    `<a class="card" href="player/index.html?case=../cases/${c.file}">
-       <div class="no">CASE ${String(i+1).padStart(3,'0')}</div>
-       <h2>${c.title}</h2><p>${c.desc||''}</p>
+    `<div class="card">
+       <a href="player/index.html?case=../cases/${c.file}">
+         <div class="no">CASE ${String(i+1).padStart(3,'0')}</div>
+         <h2>${c.title}</h2><p>${c.desc||''}</p>
+       </a>
+       <div class="modes">
+         <a class="m" href="player/index.html?case=../cases/${c.file}&mode=story">📖 ストーリー形式<small>発表・講演</small></a>
+         <a class="m" href="player/index.html?case=../cases/${c.file}&mode=quiz">🎮 クイズ形式<small>研修・テスト</small></a>
+       </div>
        <span class="tag">${c.theme||'court'}${c.minutes?' · 約'+c.minutes+'分':''}</span>
-     </a>`).join('');
+     </div>`).join('');
 }).catch(e=>{
   document.getElementById('grid').innerHTML =
     '<p style="opacity:.7">cases/index.json が読めません。ローカルなら <code>npm start</code> で開いてください。</p>';

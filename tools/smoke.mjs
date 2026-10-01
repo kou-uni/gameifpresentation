@@ -84,6 +84,40 @@ async function getPageTarget() {
   throw new Error('Chrome の DevTools に繋がりません');
 }
 
+/* ---- ストーリー形式: → だけで最後まで行けるか ----
+   これが今回の核。証拠を選ばせずにテンポよく進むのが既定なので、
+   「進むキー以外を一度も押さずに結審まで届く」ことを機械的に確かめる。 */
+const WALK_STORY = `(async () => {
+  const p = GIF.player;
+  p.playMode = 'story'; p.renderLife();
+  p.meta.typeSpeed = 0; GIF.sfx.mute(true);
+  const log = [];
+  let finished = false;
+  const origFinish = p.finish.bind(p);
+  p.finish = function () { finished = true; return origFinish(); };
+  const key = (k) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+  let steps = 0, choices = 0, otherKeys = 0, lastScene = -1, guard = 0;
+  p.restart(); await wait(300);
+
+  while (!finished && !p._ended && steps < 900) {
+    steps++;
+    if (p.sceneIndex !== lastScene) { log.push('scene ' + p.sceneIndex + ' / ' + p.scenes[p.sceneIndex].type); lastScene = p.sceneIndex; guard = 0; }
+    if (++guard > 220) { log.push('!! シーン ' + p.sceneIndex + ' から抜け出せない'); break; }
+
+    if (p.mode === 'choices') {           /* 選択肢だけは客席に選ばせる場面なので数字キー */
+      const i = p.c.sc.options.findIndex(o => o.correct);
+      choices++; otherKeys++; key(String(i + 1)); await wait(1300); continue;
+    }
+    key(' ');                              /* それ以外は一切押さない */
+    await wait(60);
+  }
+  return { finished: finished || !!p._ended, steps, choices, otherKeys,
+           scenesVisited: lastScene + 1, totalScenes: p.scenes.length,
+           solved: p.stats.solved, wrong: p.stats.wrong, log };
+})()`;
+
 /* ---- ページ内で走る踏破ロジック ---- */
 const WALK = `(async () => {
   const p = GIF.player;
@@ -223,6 +257,25 @@ const WALK = `(async () => {
   await key('E'); await sleep(450);
   shots.push(await shot('04-court-record'));
 
+  /* ストーリー形式の「つきつける」演出 */
+  await evalIn("GIF.player.playMode='story'; GIF.player.goScene(4)");
+  await sleep(300);
+  await cdp.send('Runtime.evaluate', {
+    expression: `(async()=>{const p=GIF.player,k=x=>document.dispatchEvent(new KeyboardEvent('keydown',{key:x,bubbles:true}));
+      const w=m=>new Promise(r=>setTimeout(r,m));
+      for(let i=0;i<60 && p.mode!=='beat';i++){k(' ');await w(70);} })()`,
+    awaitPromise: true, returnByValue: true });
+  await sleep(250); shots.push(await shot('04b-present'));
+  await evalIn("GIF.player.playMode='quiz'; GIF.player.goScene(4)");
+  await sleep(300);
+  await cdp.send('Runtime.evaluate', {
+    expression: `(async()=>{const p=GIF.player,k=x=>document.dispatchEvent(new KeyboardEvent('keydown',{key:x,bubbles:true}));
+      const w=m=>new Promise(r=>setTimeout(r,m));
+      for(let i=0;i<12&&p.mode!=='statements';i++){k(' ');await w(60);} while(p.t.i<2){k('ArrowRight');await w(80);}
+      k('E'); await w(300); })()`,
+    awaitPromise: true, returnByValue: true });
+  await sleep(200);
+
   /* 「異議あり！」の瞬間 */
   await cdp.send('Runtime.evaluate', {
     expression: `(()=>{const p=GIF.player;const id=p.t.sc.statements[p.t.i].weak.evidence;
@@ -243,15 +296,29 @@ const WALK = `(async () => {
   shots.push(await shot('07-menu'));
   await key('Escape'); await sleep(250);
 
-  /* 頭から最後まで通す */
-  await cdp.send('Runtime.evaluate', { expression: 'GIF.player.restart()', returnByValue: true });
+  /* ① ストーリー形式（既定）を、→ だけで通す */
+  const sres = await cdp.send('Runtime.evaluate', { expression: WALK_STORY, awaitPromise: true, returnByValue: true });
+  const sr = sres.result.value;
+  await sleep(400); shots.push(await shot('08-verdict'));
+
+  /* ② クイズ形式を、証拠つきつけ込みで通す */
+  await cdp.send('Runtime.evaluate', {
+    expression: "GIF.player.playMode='quiz'; GIF.player.renderLife(); GIF.player.restart()", returnByValue: true });
   await sleep(400);
   const res = await cdp.send('Runtime.evaluate', { expression: WALK, awaitPromise: true, returnByValue: true });
   const r = res.result.value;
-  await sleep(400); shots.push(await shot('08-verdict'));
 
   /* 出力 */
   console.log(`GAMEIF PRESENTATION — スモークテスト: ${casePath}\n`);
+  console.log('【ストーリー形式】→ だけで進む（既定）');
+  console.log(`  踏破          ${sr.scenesVisited} / ${sr.totalScenes} シーン`);
+  console.log(`  進むキー以外  ${sr.otherKeys} 回（選択肢 ${sr.choices} 回ぶん）`);
+  console.log(`  ムジュン      ${sr.solved} 箇所が自動で決まった`);
+  console.log(`  操作回数      ${sr.steps}`);
+  console.log(`  結審まで到達  ${sr.finished ? 'はい' : 'いいえ'}`);
+  if (sr.log.some(l => l.startsWith('!!'))) sr.log.filter(l => l.startsWith('!!')).forEach(l => console.log('  ' + l));
+  console.log('');
+  console.log('【クイズ形式】証拠を選ばせる');
   r.log.forEach(l => console.log('  ' + l));
   console.log('');
   console.log(`  踏破          ${r.scenesVisited} / ${r.totalScenes} シーン`);
@@ -265,7 +332,9 @@ const WALK = `(async () => {
   if (exceptions.length) { console.log('\n  ❌ 例外:'); exceptions.forEach(e => console.log('    ' + e.split('\n')[0])); }
   if (consoleErrors.length) { console.log('\n  ⚠️ console:'); consoleErrors.slice(0, 10).forEach(e => console.log('    ' + e)); }
 
-  const ok = r.finished && !exceptions.length && r.scenesVisited === r.totalScenes;
+  const storyOk = sr.finished && sr.scenesVisited === sr.totalScenes && sr.solved === r.solved;
+  if (!storyOk) console.log(`\n  ❌ ストーリー形式が通りません（踏破 ${sr.scenesVisited}/${sr.totalScenes}、ムジュン ${sr.solved}）`);
+  const ok = storyOk && r.finished && !exceptions.length && r.scenesVisited === r.totalScenes;
   console.log(`\n${ok ? '✅ 通しました' : '❌ 通りませんでした'}`);
   cleanup(ok ? 0 : 1);
 })().catch(e => { console.error('❌ ' + e.message); cleanup(2); });
