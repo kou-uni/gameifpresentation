@@ -13,8 +13,17 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const CDP=9341, sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=mkdtempSync(join(tmpdir(),'gif-file-'));
-const chrome=spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
- ['--headless=new','--disable-gpu','--mute-audio','--window-size=1600,900',
+const CHROME_BIN = [
+  process.env.CHROME_PATH,
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+  '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium', '/usr/bin/chromium-browser'
+].filter(Boolean).find(existsSync);
+if (!CHROME_BIN) { console.error('Chrome 系が見つかりません'); process.exit(2); }
+const chrome=spawn(CHROME_BIN,
+ ['--headless=new','--disable-gpu','--no-sandbox','--mute-audio','--window-size=1600,900',
   `--user-data-dir=${profile}`,`--remote-debugging-port=${CDP}`,'about:blank'],{stdio:'ignore'});
 let wsUrl; for(let i=0;i<60;i++){try{const l=await (await fetch(`http://127.0.0.1:${CDP}/json/list`)).json();const p=l.find(t=>t.type==='page');if(p){wsUrl=p.webSocketDebuggerUrl;break}}catch{};await sleep(250)}
 const ws=new WebSocket(wsUrl); await new Promise(r=>ws.onopen=r);

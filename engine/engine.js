@@ -80,6 +80,7 @@
 
     this.build();
     this.bind();
+    this.layout();
   }
 
   /* 画像のパスは「ケースJSONの置き場所」からの相対で書く。
@@ -149,6 +150,17 @@
     this.el.toast = h('div', 'toast');
     this.el.shout = h('div', 'shout', '<span></span>');
     this.el.flash = h('div', 'flash');
+    this.el.orient = h('div', 'orient',
+      '<div class="ic">📱</div>' +
+      '<h2>横向きにすると<br>大きく見られます</h2>' +
+      '<p>この資料は 16:9 で作られています。縦のままだと文字が小さくなります。' +
+      '画面の回転がロックされている場合は、下のボタンで回せます。</p>' +
+      '<div class="btns">' +
+        '<button class="rot">画面を回して大きく見る</button>' +
+        '<button class="ghost stay">このまま見る</button>' +
+      '</div>');
+    this.el.rotToggle = h('button', 'rot-toggle', '⟳');
+    this.el.rotToggle.setAttribute('aria-label', '画面の向きを切り替える');
     this.el.presentCard = h('div', 'present-card');
     this.el.vignette = h('div', 'vignette');
     this.el.bars = h('div', 'bars', '<i></i><i></i>');
@@ -160,8 +172,45 @@
      this.el.shout, this.el.flash
     ].forEach(function (e) { this.root.appendChild(e); }, this);
     this.root.appendChild(hud);
+    document.body.appendChild(this.el.orient);   /* ステージの外。回転の影響を受けない */
+    document.body.appendChild(this.el.rotToggle);
 
     this.renderLife();
+  };
+
+  /* ---------------------------------------------------------- 画面寸法 --
+     ステージの大きさは JS が px で決める。
+     iOS の 100vh はブラウザUIを含むことがあり、vh 任せだと
+     「時々」表示が崩れる（実際に報告が出た）。visualViewport を基準にする。 */
+  Player.prototype.layout = function () {
+    var vv = window.visualViewport;
+    var vw = Math.round((vv && vv.width) || window.innerWidth);
+    var vh = Math.round((vv && vv.height) || window.innerHeight);
+    if (!vw || !vh) return;
+
+    var rot = this.root.dataset.rot === '1';
+    var availW = rot ? vh : vw, availH = rot ? vw : vh;
+    var w = Math.min(availW, availH * 16 / 9);
+    var h = w * 9 / 16;
+
+    var st = this.root.style;
+    st.width = w + 'px';
+    st.height = h + 'px';
+    st.aspectRatio = 'auto';
+    st.left = '50%'; st.top = '50%'; st.right = 'auto'; st.bottom = 'auto';
+    st.margin = '0';
+    st.transform = 'translate(-50%,-50%)' + (rot ? ' rotate(90deg)' : '');
+
+    /* 縦持ちで、しかも帯が細すぎるときだけ案内を出す */
+    var portrait = vh > vw * 1.2;
+    on(this.el.orient, 'show', portrait && !rot && !this._orientDismissed);
+    on(this.el.rotToggle, 'show', portrait);
+  };
+
+  Player.prototype.setRotated = function (v) {
+    this.root.dataset.rot = v ? '1' : '0';
+    this._orientDismissed = true;
+    this.layout();
   };
 
   /* ------------------------------------------------------------- 入力 -- */
@@ -206,6 +255,32 @@
       self.next();
     });
     this.root.addEventListener('contextmenu', function (e) { e.preventDefault(); self.back(); });
+
+    this.el.orient.querySelector('.rot').addEventListener('click', function (e) {
+      e.stopPropagation(); G.sfx.unlock(); self.setRotated(true);
+    });
+    this.el.rotToggle.addEventListener('click', function (e) {
+      e.stopPropagation(); G.sfx.unlock();
+      self.setRotated(self.root.dataset.rot !== '1');
+    });
+    this.el.orient.querySelector('.stay').addEventListener('click', function (e) {
+      e.stopPropagation(); G.sfx.unlock(); self._orientDismissed = true; self.layout();
+    });
+
+    var relayout = function () { self.layout(); };
+    window.addEventListener('resize', relayout);
+    window.addEventListener('orientationchange', function () {
+      /* 向きが変わったら、手で回した状態は解除する。二重に回って横倒しになるため */
+      self.root.dataset.rot = '0';
+      self._orientDismissed = false;
+      setTimeout(relayout, 60); setTimeout(relayout, 400);
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', relayout);
+      window.visualViewport.addEventListener('scroll', relayout);
+    }
+    /* 読み込み直後はビューポートが落ち着いていないことがある */
+    setTimeout(relayout, 120); setTimeout(relayout, 600);
 
     var stop = function (e) { e.stopPropagation(); };
     this.el.prevArrow.addEventListener('click', function (e) { stop(e); self.stmtMove(-1); });

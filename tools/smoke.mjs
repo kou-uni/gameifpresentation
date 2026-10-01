@@ -18,10 +18,13 @@ const casePath = process.argv[2] || 'cases/demo-quantum.json';
 const PORT = 8791, CDP = 9333;
 
 const CHROME = [
+  process.env.CHROME_PATH,
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium',
-  '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
-].find(existsSync);
+  '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+  '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium', '/usr/bin/chromium-browser'
+].filter(Boolean).find(existsSync);
 if (!CHROME) { console.error('Chrome 系が見つかりません'); process.exit(2); }
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -33,7 +36,7 @@ const server = spawn(process.execPath, [join(ROOT, 'tools/serve.mjs')],
 /* ---- Chrome ---- */
 const profile = mkdtempSync(join(tmpdir(), 'gif-smoke-'));
 const chrome = spawn(CHROME, [
-  '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+  '--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
   '--hide-scrollbars', '--mute-audio', '--window-size=1600,900',
   `--user-data-dir=${profile}`, `--remote-debugging-port=${CDP}`, 'about:blank'
 ], { stdio: 'ignore' });

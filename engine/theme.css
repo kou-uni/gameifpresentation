@@ -55,13 +55,50 @@ body{
 }
 
 /* ===================== ステージ（16:9 固定） ===================== */
+/* 寸法は engine が visualViewport から px で入れる。
+   iOS の 100vh はブラウザUIを含むことがあり、vh 任せだと表示が崩れる。
+   以下は JS が走る前の保険。 */
 #stage{
-  position:fixed; inset:0; margin:auto;
-  aspect-ratio:16/9; width:min(100vw, calc(100vh*16/9)); height:auto;
+  position:fixed; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  aspect-ratio:16/9; width:min(100vw, calc(100svh*16/9));
   container-type:size;
   background:var(--ink); overflow:hidden;
   box-shadow:0 0 0 100vmax #000;
 }
+/* 縦持ちのまま見るとき。本人が選んだときだけ回す（勝手に回すと事故に見える） */
+#stage[data-rot="1"]{transform:translate(-50%,-50%) rotate(90deg);}
+
+/* ===================== 縦画面の案内 ===================== */
+.orient{
+  position:fixed; inset:0; z-index:200; display:none;
+  flex-direction:column; align-items:center; justify-content:center; gap:1.4rem;
+  background:#070c18; color:#eef2f8; text-align:center; padding:2rem 1.5rem;
+  font-family:var(--font);
+}
+.orient.show{display:flex;}
+.orient .ic{font-size:3.4rem; line-height:1; animation:tilt 2.2s ease-in-out infinite;}
+@keyframes tilt{0%,60%,100%{rotate:0deg} 30%{rotate:90deg}}
+.orient h2{font-size:1.4rem; font-weight:900; line-height:1.5;}
+.orient p{font-size:.92rem; opacity:.75; line-height:1.8; max-width:22rem;}
+.orient .btns{display:flex; flex-direction:column; gap:.7rem; width:min(20rem,100%); margin-top:.6rem;}
+.orient button{
+  font-family:var(--font); font-size:1rem; font-weight:800; padding:.9rem 1rem;
+  border-radius:.6rem; cursor:pointer; border:2px solid #eef2f8;
+  background:linear-gradient(180deg,#3a5fa8,#1b2f5e); color:#fff;
+}
+.orient button.ghost{background:transparent; border-color:rgba(255,255,255,.3); font-weight:600; opacity:.85;}
+@media (prefers-reduced-motion: reduce){ .orient .ic{animation:none;} }
+
+/* 縦持ちのときだけ出る、回転のトグル。戻せないと詰む */
+.rot-toggle{
+  position:fixed; right:.8rem; bottom:.8rem; z-index:150; display:none;
+  width:3rem; height:3rem; border-radius:50%; border:1px solid rgba(255,255,255,.35);
+  background:rgba(10,16,30,.8); color:#eef2f8; font-size:1.3rem; cursor:pointer;
+  align-items:center; justify-content:center; backdrop-filter:blur(6px);
+  font-family:var(--font);
+}
+.rot-toggle.show{display:flex;}
 
 
 /* ===================== カメラの層 =====================
@@ -549,7 +586,7 @@ body{
 .line .c{visibility:hidden;}
 .line .c.on{visibility:visible;}
 .statement-mark{
-  position:fixed; left:50%; top:20.5cqh; translate:-50% 0; z-index:34;
+  position:absolute; left:50%; top:20.5cqh; translate:-50% 0; z-index:34;
   font-size:1.6cqw; font-weight:900; letter-spacing:.25em;
   color:var(--frame); text-shadow:var(--outline); opacity:.85;
 }

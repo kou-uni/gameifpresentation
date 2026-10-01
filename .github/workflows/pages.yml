@@ -32,6 +32,20 @@ jobs:
       - name: 1枚HTMLをビルド
         run: node tools/build.mjs
 
+      # 実ブラウザでの検査。PC では一度も再現しない崩れ方があるので、
+      # スマホのビューポートもここで見る（「時々バグる」と報告が出た種類）
+      - name: 実ブラウザで通し（ストーリー / クイズ 両方）
+        run: node tools/smoke.mjs
+
+      - name: 検出器そのものが鳴るかを確認
+        run: node tools/check-mobile.mjs --self-test
+
+      - name: スマホ表示の検査
+        run: node tools/check-mobile.mjs
+
+      - name: 1枚HTMLが file:// で完走するか
+        run: node tools/check-portable.mjs
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

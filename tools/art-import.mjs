@@ -50,10 +50,13 @@ const tol = parseInt((flags.find(f => f.startsWith('--tol=')) || '--tol=90').spl
 const key = [parseInt(color.slice(0,2),16), parseInt(color.slice(2,4),16), parseInt(color.slice(4,6),16)];
 
 const CHROME = [
+  process.env.CHROME_PATH,
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium',
-  '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
-].find(existsSync);
+  '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+  '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium', '/usr/bin/chromium-browser'
+].filter(Boolean).find(existsSync);
 if (!CHROME) { console.error('Chrome 系が見つかりません'); process.exit(2); }
 
 const MIME = { '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg',
@@ -63,7 +66,7 @@ if (!mime) { console.error(`未対応の形式: ${extname(src)}`); process.exit(
 
 const CDP = 9347;
 const profile = mkdtempSync(join(tmpdir(), 'gif-art-'));
-const chrome = spawn(CHROME, ['--headless=new','--disable-gpu','--mute-audio',
+const chrome = spawn(CHROME, ['--headless=new','--disable-gpu','--no-sandbox','--mute-audio',
   `--user-data-dir=${profile}`, `--remote-debugging-port=${CDP}`, 'about:blank'], { stdio: 'ignore' });
 const done = (code) => { try { chrome.kill(); } catch {} process.exit(code); };
 
