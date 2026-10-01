@@ -19,6 +19,13 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const selfTest = process.argv.includes('--self-test');
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+/* CDP は WebSocket で叩く。グローバル WebSocket は Node 22 以降にしか無い */
+if (typeof WebSocket === 'undefined') {
+  console.error(`このツールは Node 22 以上が要ります（いまは ${process.version}）。
+  理由: ブラウザを CDP で操作するのに、グローバル WebSocket を使っています。`);
+  process.exit(2);
+}
+
 const PORT = 8843, CDP = 9355;
 const MIN_FONT = 18;          /* 本文がこれより小さいと、手元でも読めない */
 

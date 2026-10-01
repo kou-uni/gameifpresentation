@@ -28,6 +28,13 @@ const CHROME = [
 if (!CHROME) { console.error('Chrome 系が見つかりません'); process.exit(2); }
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+/* CDP は WebSocket で叩く。グローバル WebSocket は Node 22 以降にしか無い */
+if (typeof WebSocket === 'undefined') {
+  console.error(`このツールは Node 22 以上が要ります（いまは ${process.version}）。
+  理由: ブラウザを CDP で操作するのに、グローバル WebSocket を使っています。`);
+  process.exit(2);
+}
+
 
 /* ---- 静的サーバ ---- */
 const server = spawn(process.execPath, [join(ROOT, 'tools/serve.mjs')],

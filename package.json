@@ -18,5 +18,6 @@
   "license": "MIT",
   "engines": {
     "node": ">=18"
-  }
+  },
+  "//": "ビルドと検査は Node 18+。実ブラウザ検査（smoke / check:mobile / check:portable / art）は Node 22+ と Chrome 系が要ります"
 }

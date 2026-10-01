@@ -22,7 +22,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 実ブラウザ検査は CDP を WebSocket で叩く。
+          # グローバル WebSocket は Node 22 以降にしか無い（20 で落ちた）
+          node-version: 22
 
       # 設計ミス（証拠の配り忘れ等）があればここで落とす
       - name: ケースを検査
