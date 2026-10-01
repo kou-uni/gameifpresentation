@@ -300,8 +300,15 @@
     var def = this.cast[whoId]; if (!def) return;
     var wrap = h('div', 'actor ' + (side || def.side || 'center'));
     if (def.img) {
-      var im = new Image(); im.src = def.img; im.alt = def.name || whoId;
-      if (def.poses && def.poses[pose]) im.src = def.poses[pose];
+      /* poses は "path" でも {src, flip} でも書ける。
+         生成した絵が相手と逆を向いているときは flip:true で左右反転する。
+         向きのためだけに描き直すのは無駄なので。 */
+      var src = def.img, flip = !!def.flip;
+      var pv = def.poses && def.poses[pose];
+      if (typeof pv === 'string') src = pv;
+      else if (pv && pv.src) { src = pv.src; if (pv.flip != null) flip = !!pv.flip; }
+      var im = new Image(); im.src = src; im.alt = def.name || whoId;
+      if (flip) wrap.classList.add('flip');
       wrap.appendChild(im);
     } else {
       wrap.innerHTML = G.art.portrait(def, pose || 'normal');

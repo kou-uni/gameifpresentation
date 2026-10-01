@@ -62,7 +62,8 @@ function checkCase(file) {
     if (l.text && l.text.length > 120) W(`${at}: ${l.text.length}文字 — テキストボックスから溢れる（目安90文字まで）`);
     if (l.who && l.pose && posedCast.has(l.who)) {
       const poses = d.cast[l.who].poses || {};
-      if (!poses[l.pose]) missingPose.add(`${l.who}:${l.pose}`);
+      const pv = poses[l.pose];
+      if (!pv || (typeof pv === 'object' && !pv.src)) missingPose.add(`${l.who}:${l.pose}`);
     }
   });
 

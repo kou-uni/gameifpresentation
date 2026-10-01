@@ -243,6 +243,43 @@ turned about 20 degrees. Framed from the waist up. Normal lens.
 エンジンのカメラは背景にヨー角をかけますが、**元の絵が正面だけだと限界があります。**
 `@defense` / `@prosecution` の絵を足すと、**切り返しのたびに実際に別の絵へ切り替わります。**
 
+### まずこの1枚（正面の法廷）
+
+そのまま貼れる完成形。これが基準になり、左右はここからの差分です。
+
+```
+Japanese anime visual-novel background art, clean cel shading, bold but sparse
+outlines, warm even overhead lighting, simple flat rendering. No characters, no
+people, no text, no letters, no signage, no logos, no watermark.
+
+SCENE: the interior of a modern courtroom seen straight on from the middle of the
+floor. Dark polished wood panelling across the back wall, a raised judge's bench
+spanning the upper centre, a tall circular crest medallion mounted on the wall
+above it, a low wooden railing running across the lower third. Deep warm browns
+and muted gold.
+
+COMPOSITION: symmetrical, one-point perspective, horizon at the middle. Keep the
+lower third and the centre of the frame visually calm and uncluttered — a dialogue
+box and a character will be placed on top of them. Slightly desaturated and a
+little darker than normal so bright character art stays readable over it.
+
+ASPECT: 16:9, 1920x1080. No border, no frame, no vignette.
+```
+
+左右の切り返し用は、`SCENE` と `COMPOSITION` だけ差し替えます。
+
+```
+SCENE: the same courtroom seen from the left-hand advocate's desk, looking
+diagonally across the floor toward the opposite desk. The wooden railing runs
+diagonally into the frame from the lower left.
+COMPOSITION: strong one-point perspective receding to the right. Keep the lower
+third and centre calm.
+```
+右席版は `lower left` → `lower right`、`receding to the right` → `receding to the left`。
+
+> **下三分の一と中央は空けさせること。** ここはテキストボックスとキャラが乗ります。
+> 描き込ませると、本番で文字が読めなくなります。
+
 共通ブロック：
 
 ```
@@ -314,8 +351,9 @@ assets/
     "poses": {                                 // ポーズごとの差し替え
       "talk":      "assets/chars/a/talk.png",
       "confident": "assets/chars/a/confident.png",
-      "point":     "assets/chars/a/point.png",
-      "shock":     "assets/chars/a/shock.png"
+      "shock":     "assets/chars/a/shock.png",
+      // 絵が相手と逆を向いているときは反転できる。描き直さなくていい
+      "point":     { "src": "assets/chars/a/point.png", "flip": true }
     }
   }
 },
@@ -338,6 +376,7 @@ assets/
 | 手が顔より大きい／顔が隠れる | `The hand must be smaller than the head and must not overlap the face. The face is the main subject.` |
 | 真正面すぎて平板 | `Turn the body 30 degrees into a three-quarter view and lean it forward.` |
 | 煽りすぎて見上げる画になる | `Eye level camera. No low angle, no wide-angle distortion.` |
+| 腕が相手と逆を向いている | **描き直さない。** JSON で `"point": { "src": "...", "flip": true }` |
 | 塗りが厚い／油絵風 | `Flat two-tone cel shading only. No soft gradients, no painterly texture.` |
 | 毎回デザインが変わる | 参照画像を添付し `Keep the exact same character design as the attached reference.` |
 | 文字が入る | `No text, no letters, no signage anywhere in the image.` |

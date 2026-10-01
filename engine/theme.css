@@ -202,6 +202,8 @@ body{
 .actor.left{left:26%;} .actor.right{left:74%;}
 .actor img,.actor svg{height:100%; width:auto; display:block;
   filter:drop-shadow(0 0 3cqw rgba(0,0,0,.55));}
+/* 生成した絵が相手と逆を向いているとき。描き直さずに向きだけ変える */
+.actor.flip img,.actor.flip svg{transform:scaleX(-1);}
 .actor.talking{animation:bob .5s ease-in-out infinite alternate;}
 @keyframes bob{to{translate:-50% -0.5cqh}}
 .actor.damage{animation:hit .35s steps(2) 3;}
