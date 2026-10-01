@@ -60,6 +60,66 @@
   "img": "assets/chart.png" }       // あれば icon より優先
 ```
 
+## カメラ（画角）— 原作の芯はここ
+
+**重要な指摘のとき、検討のときに、見ている角度が変わる。** それをやらないと、
+同じ台詞でも紙芝居に落ちます。既定では**書かなくても自動で決まります**が、
+決めの瞬間だけは明示すると効きます。
+
+```jsonc
+{ "who":"hero", "pose":"point", "text":"…",
+  "shot":"point",        // 画角
+  "angle":"defense",     // どの席から見ているか
+  "move":"punch",        // 寄り方
+  "dutch":-3,            // 追加で傾ける（度）
+  "cinematic":true,      // 上下に黒帯を入れる
+  "whip":true }          // 強制的に切り返す（通常は自動）
+```
+
+| `shot` | 画 | 使いどころ |
+|---|---|---|
+| `wide` | 全景 | シーンの頭、引いて状況を見せる |
+| `mid` | バストアップ（既定） | 普通の会話 |
+| `close` | 寄り | 重要な指摘 |
+| `extreme` | 極寄り | 叫びの瞬間 |
+| `low` | 煽り（下から） | 追い詰める、ゆさぶる |
+| `high` | 俯瞰 | 突き放す、裁定する |
+| `think` | やや寄り＋傾き | 検討している |
+| `stare` | 中距離で止める | 睨み合い、ためる |
+| `gallery` | 傍聴席 | 「ざわ……」 |
+| **`point`** | **指差しの煽り** | **決め。最重要メッセージ** |
+| **`slam`** | **机バンの煽り** | **決め。断言する** |
+| `shock` | 真っ直ぐ寄る | ガーン（ダメージ） |
+
+| `angle` | 視点 |
+|---|---|
+| `front` | 正面 |
+| `defense` | 弁護席の側から法廷を見る |
+| `prosecution` | 検察席の側から |
+| `witness` | 証言台の正面 |
+| `judge` | 裁判長席 |
+| `gallery` | 傍聴席 |
+
+| `move` | 寄り方 |
+|---|---|
+| `cut` | 瞬間的に切り替える |
+| `snap` | 既定。素早く決まる |
+| `punch` | 一気に寄る（決めの瞬間） |
+| `push` | 喋りながらじわ寄り |
+| `pull` | 引く |
+| `drift` | ほぼ気づかない移動 |
+
+### 自動でかかるもの（書かなくていい）
+
+- **立ち位置が左右で入れ替わると、切り返し（ホイップパン）が入る**
+- `pose` から画角が決まる（`point`→指差しの煽り、`damage`→ガーン、`think`→検討）
+- `shout` があれば極寄り＋ダッチ角＋フラッシュ
+- 喋っている間、気づかない速さで少しずつ詰める（静止画に見せない）
+- `prefers-reduced-motion` が有効な環境では、動きを止める
+
+> **絵の角度は、カメラでは作れません。** 指差しの煽りは「そういう角度で描かれた絵」が要ります。
+> 生成プロンプトは [ILLUSTRATION-PROMPTS.md](ILLUSTRATION-PROMPTS.md) に用途ごとに置いてあります。
+
 ## lines（セリフの並び）— 共通
 
 ```jsonc
@@ -67,9 +127,13 @@
   "text": "話す内容",
   "pose": "confident",      // normal talk confident shock think sweat damage point slam
   "side": "left",
-  "bg": "courtroom",        // courtroom stand lobby dark white
+  "bg": "courtroom",        // courtroom stand lobby dark white gallery
   "sfx": "gavel",           // gavel objection breakthrough wrong damage evidence
                             // press select move open close fanfare reveal
+  "shot": "point",          // 画角（上の表。省略すると pose から自動）
+  "angle": "defense",       // 視点
+  "move": "punch",          // 寄り方
+  "cinematic": true,        // 上下に黒帯
   "shout": "異議あり！",     // 叫び演出を挟んでから喋る
   "flash": true, "shake": true,
   "style": "testimony",     // testimony=緑 / press=水色

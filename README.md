@@ -28,9 +28,23 @@
 スライドは「聞く」。法廷は「**自分が弁護人として殴る**」。
 同じ内容でも、聴衆が誤解を自分の手で壊したほうが残ります。
 
+目指しているのは特定の作品の体験ではなく、**ゲームをしているようなプレゼン**です。
+法廷はその第一形式で、場面と役割は差し替えられる作りにしてあります。
+
+### 画角が変わる
+
+機構の次に効くのがカメラです。**重要な指摘のとき、検討のときに、見ている角度が変わる。**
+立ち位置が左右で入れ替われば切り返しが入り、ムジュンを突けば指差しの煽りに寄り、
+裁定の瞬間は引いて俯瞰になる。既定では `pose` から自動で決まり、決めの1行だけ
+`"shot":"point"` のように明示します。→ [FORMAT.md のカメラの節](docs/FORMAT.md)
+
 | 証言（通説を喋らせる） | 法廷記録（根拠を選ばせる） |
 |---|---|
 | ![証言](docs/img/testimony.png) | ![法廷記録](docs/img/court-record.png) |
+
+立ち絵は差し替え前提のプレースホルダです。
+[docs/ILLUSTRATION-PROMPTS.md](docs/ILLUSTRATION-PROMPTS.md) のプロンプトで生成して
+`assets/` に置くと入れ替わります。
 
 ---
 
@@ -56,6 +70,7 @@ npm run build:artifact # Artifact として publish する版（外から / ス�
 ```
 
 - 設計の考え方 → **[docs/TONE-AND-MANNER.md](docs/TONE-AND-MANNER.md)**
+- 絵の作り方（Grok / ChatGPT 用プロンプト集）→ **[docs/ILLUSTRATION-PROMPTS.md](docs/ILLUSTRATION-PROMPTS.md)**
 - JSONの書式 → **[docs/FORMAT.md](docs/FORMAT.md)**
 - 作業手順 → **[docs/AUTHORING.md](docs/AUTHORING.md)**
 
@@ -111,6 +126,7 @@ index.html              ケース一覧
 player/index.html       プレイヤー（?case=... で読み込む）
 engine/
   engine.js             進行の状態機械
+  camera.js             画角（寄り・切り返し・煽り）
   theme.css             トーン&マナー（配色プリセット4種）
   art.js                立ち絵のパラメトリックSVG生成
   sfx.js                効果音のWebAudio合成
@@ -120,7 +136,7 @@ tools/
   check.mjs             設計ミスの検査
   smoke.mjs             実ブラウザでの通し
   serve.mjs             依存ゼロの静的サーバ
-docs/                   書式・設計・手順
+docs/                   書式・設計・手順・イラスト生成プロンプト集
 prompts/case-director.md  AIに書かせるためのプロンプト
 ```
 

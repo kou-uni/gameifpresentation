@@ -230,7 +230,9 @@ const WALK = `(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown',{key:String(i+1),bubbles:true}));})()`,
     returnByValue: true });
   await sleep(820); shots.push(await shot('05-objection'));   // shake(.4s) が終わり、shout(1.1s) が出ている間
-  await sleep(800);
+  await sleep(900);
+  /* 叫びが引けた直後＝指差しの煽り（決めショット）が出ている瞬間 */
+  shots.push(await shot('05b-point'));
 
   /* 選択肢（客席に決めさせる画面） */
   await evalIn('GIF.player.goScene(9)'); await sleep(700);

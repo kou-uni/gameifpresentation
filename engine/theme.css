@@ -19,8 +19,14 @@
   --wood-2:     #5b3a22;
   --paper:      #f6f1e4;
 
-  --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+  /* 原作の字面は丸ゴシック寄り。手元にある順に当てる */
+  --font: "Hiragino Maru Gothic ProN", "Hiragino Maru Gothic Pro",
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
           "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  /* 袋文字（縁取り）。法廷ものの字は、必ず縁が立っている */
+  --outline: -0.22cqw -0.22cqw 0 #060a14, 0.22cqw -0.22cqw 0 #060a14,
+             -0.22cqw  0.22cqw 0 #060a14, 0.22cqw  0.22cqw 0 #060a14,
+              0 0.35cqw 0.5cqw rgba(0,0,0,.8);
 
   /* stage内の基準サイズ。全部 cqw/cqh 由来にして解像度非依存にする */
   --u: 1cqw;
@@ -57,8 +63,93 @@ body{
   box-shadow:0 0 0 100vmax #000;
 }
 
+
+/* ===================== カメラの層 =====================
+   #stage > .cam > .world > .drift > (.bg + .actors)
+   内側ほど小さい動きを持つ。JS が触るのは .cam と .bg だけ。
+   .world は切り返し（CSSアニメ）専用にして、JS の transform と衝突させない。 */
+.cam{
+  position:absolute; inset:0; will-change:transform;
+  transform-origin:50% 44%;
+}
+.world{position:absolute; inset:0;}
+.drift{
+  position:absolute; inset:0;
+  animation:breathe 17s ease-in-out infinite alternate;
+}
+@keyframes breathe{ from{transform:scale(1)} to{transform:scale(1.035)} }
+
+/* 切り返し（ホイップパン）。真ん中で中身が入れ替わる */
+.world.whip-l{animation:whipL .34s cubic-bezier(.4,0,.2,1);}
+.world.whip-r{animation:whipR .34s cubic-bezier(.4,0,.2,1);}
+@keyframes whipL{
+  0%{transform:translateX(0); filter:blur(0)}
+  38%{transform:translateX(30%); filter:blur(1.4cqw) brightness(1.15)}
+  39%{transform:translateX(-30%); filter:blur(1.4cqw) brightness(1.15)}
+  100%{transform:translateX(0); filter:blur(0)}
+}
+@keyframes whipR{
+  0%{transform:translateX(0); filter:blur(0)}
+  38%{transform:translateX(-30%); filter:blur(1.4cqw) brightness(1.15)}
+  39%{transform:translateX(30%); filter:blur(1.4cqw) brightness(1.15)}
+  100%{transform:translateX(0); filter:blur(0)}
+}
+
+/* 背景は .bg 自身がヨー角（どの席から見ているか）を持つ */
+.bg{transform-origin:50% 55%; backface-visibility:hidden;}
+
+/* 寄るほど周辺を落とす。画面が締まる */
+.vignette{
+  position:absolute; inset:0; pointer-events:none; z-index:12;
+  background:radial-gradient(78% 72% at 50% 46%, transparent 42%, rgba(0,0,0,.72) 100%);
+  opacity:.55; transition:opacity .4s;
+}
+#stage[data-shot="close"] .vignette,
+#stage[data-shot="stare"] .vignette,
+#stage[data-shot="low"] .vignette      {opacity:.78;}
+#stage[data-shot="point"] .vignette,
+#stage[data-shot="slam"] .vignette,
+#stage[data-shot="shock"] .vignette    {opacity:.88;}
+#stage[data-shot="extreme"] .vignette  {opacity:.9;}
+#stage[data-shot="wide"] .vignette,
+#stage[data-shot="gallery"] .vignette  {opacity:.4;}
+
+/* 山場だけシネスコの帯を入れる（line.cinematic) */
+.bars{position:absolute; inset:0; pointer-events:none; z-index:13;}
+.bars i{
+  position:absolute; left:0; right:0; height:0; background:#000;
+  transition:height .45s cubic-bezier(.2,.9,.25,1);
+}
+.bars i:first-child{top:0;} .bars i:last-child{bottom:0;}
+.bars.show i{height:9cqh;}
+
+/* 法廷記録・目次が開いているときは、奥をぼかし、進行中のUIを引っ込める。
+   残っていると、証拠を読む画面に証言が透けて読みにくい */
+#stage.overlay-open .cam{filter:blur(.5cqw) brightness(.4) saturate(.75);}
+.cam{transition:filter .25s;}
+#stage.overlay-open .textbox,
+#stage.overlay-open .banner,
+#stage.overlay-open .stmt-arrow,
+#stage.overlay-open .xe-bar,
+#stage.overlay-open .statement-mark,
+#stage.overlay-open .hud,
+#stage.overlay-open .hint,
+#stage.overlay-open .vignette{
+  opacity:0 !important; pointer-events:none; transition:opacity .2s;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .drift{animation:none;}
+  .world.whip-l,.world.whip-r{animation:none;}
+  .cam{transition:none !important;}
+}
+
 /* ===================== 背景 ===================== */
 .bg{position:absolute; inset:0; transition:opacity .25s;}
+/* 画像背景を入れたとき。生成背景の上書き */
+.bg.img{background-size:cover !important; background-position:center !important;
+        background-repeat:no-repeat !important;}
+.bg.img .emblem{display:none !important;}
 .bg::after{ /* 上からの光 */
   content:""; position:absolute; inset:0;
   background:radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,.18), transparent 60%);
@@ -80,6 +171,12 @@ body{
 }
 .bg[data-bg="lobby"]{
   background:linear-gradient(180deg,#2a3f6b,#101d3a 70%,#0a1226);
+}
+.bg[data-bg="gallery"]{
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.45) 0 1.6cqh, transparent 1.6cqh 5cqh),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 3cqw, transparent 3cqw 7cqw),
+    linear-gradient(180deg,#1a2238,#0a1020 70%,#060a14);
 }
 .bg[data-bg="dark"]{ background:radial-gradient(70% 70% at 50% 40%, #16192b, #000 80%); }
 .bg[data-bg="white"]{ background:var(--paper); }
@@ -113,13 +210,21 @@ body{
 /* ===================== HUD ===================== */
 .hud{position:absolute; inset:0; pointer-events:none; padding:2.2cqw;
      display:flex; justify-content:space-between; align-items:flex-start;}
-.life{display:flex; gap:.7cqw; align-items:center;}
-.life .pip{
-  width:2.4cqw; height:2.4cqw; border-radius:50%;
-  background:var(--damage); box-shadow:0 0 1.2cqw rgba(255,60,80,.8), inset 0 -.4cqw rgba(0,0,0,.35);
-  transition:.3s;
+/* ライフは帯。減るほど緑→黄→赤に寄る */
+.life{
+  display:flex; gap:.25cqw; align-items:center; padding:.5cqh .6cqw;
+  background:rgba(0,0,0,.55); border:.22cqw solid var(--frame); border-radius:.4cqw;
+  box-shadow:0 .3cqw .8cqw rgba(0,0,0,.6);
 }
-.life .pip.off{background:#2a2f3d; box-shadow:none; scale:.7; opacity:.6;}
+.life .pip{
+  width:2.9cqw; height:1.5cqh; border-radius:.15cqw;
+  background:linear-gradient(180deg,#7df09a,#2fae55);
+  box-shadow:inset 0 -.25cqh rgba(0,0,0,.3);
+  transition:.35s;
+}
+.life[data-level="mid"] .pip{background:linear-gradient(180deg,#ffe066,#d99a1f);}
+.life[data-level="low"] .pip{background:linear-gradient(180deg,#ff8a8a,#d02230);}
+.life .pip.off{background:#1b2030; box-shadow:inset 0 0 0 .12cqw rgba(255,255,255,.08);}
 .chapter{
   font-size:2cqw; font-weight:700; letter-spacing:.08em;
   color:var(--accent); text-shadow:0 .25cqw 0 rgba(0,0,0,.8);
@@ -138,13 +243,47 @@ body{
 }
 .banner.show{opacity:1;}
 
+/* 証言の送り。画面の左右端に大きく。クリックでも送れる */
+.stmt-arrow{
+  position:absolute; top:46%; z-index:35; width:7cqw; height:12cqh;
+  display:none; place-items:center; cursor:pointer;
+  font-size:5cqw; font-weight:900; color:var(--frame);
+  text-shadow:var(--outline); opacity:.55; transition:.15s;
+}
+.stmt-arrow.show{display:grid;}
+.stmt-arrow:hover{opacity:1; scale:1.12;}
+.stmt-arrow.prev{left:1cqw;} .stmt-arrow.next-s{right:1cqw;}
+
+/* 尋問中の操作ボタン。原作と同じく、画面に出ていないと押せない */
+.xe-bar{
+  position:absolute; right:2.5cqw; bottom:31.2cqh; z-index:46;
+  display:none; gap:1cqw;
+}
+.xe-bar.show{display:flex;}
+.xe-btn{
+  font-family:var(--font); font-size:1.85cqw; font-weight:900; letter-spacing:.06em;
+  padding:.85cqh 1.8cqw; cursor:pointer; color:#fff;
+  background:linear-gradient(180deg,#3a5fa8,#1b2f5e);
+  border:.26cqw solid var(--frame); border-radius:.45cqw;
+  box-shadow:0 .45cqw 0 rgba(0,0,0,.55), inset 0 .25cqw 0 rgba(255,255,255,.25);
+  text-shadow:0 .2cqw .3cqw rgba(0,0,0,.6); transition:.1s;
+}
+.xe-btn:hover{filter:brightness(1.18);}
+.xe-btn:active{transform:translateY(.3cqh); box-shadow:0 .15cqw 0 rgba(0,0,0,.55);}
+.xe-btn.present{background:linear-gradient(180deg,#c0392b,#7d1f16);}
+.xe-btn .k{opacity:.65; font-size:1.4cqw; margin-left:.6cqw;}
+
 /* ===================== テキストボックス ===================== */
 .textbox{
   position:absolute; left:2.5cqw; right:2.5cqw; bottom:2.5cqw; height:26cqh;
   background:linear-gradient(180deg, var(--navy-2), var(--navy) 60%);
   border:.45cqw solid var(--frame);
-  border-radius:.6cqw;
-  box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.6), inset 0 0 3cqw rgba(0,0,0,.5);
+  border-radius:.7cqw;
+  box-shadow:
+    0 0 0 .18cqw rgba(0,0,0,.85),                 /* 外側の黒い締め */
+    inset 0 0 0 .22cqw rgba(255,255,255,.28),     /* 内側の細い白線（二重枠） */
+    inset 0 .5cqw 1.2cqw rgba(255,255,255,.10),
+    0 1.2cqw 3cqw rgba(0,0,0,.65), inset 0 0 3cqw rgba(0,0,0,.5);
   padding:3.2cqh 3cqw 2cqh;
   opacity:0; transition:opacity .15s;
 }
@@ -157,20 +296,22 @@ body{
 .textbox::before{left:1cqw; bottom:1cqw;}
 .textbox::after{right:1cqw; bottom:1cqw;}
 
+/* 名前プレートはテキストボックスの左上角に食い込ませる。濃紺地に白抜き。 */
 .nameplate{
-  position:absolute; top:-2.6cqh; left:1.6cqw;
-  padding:.5cqh 1.6cqw; font-size:2.1cqw; font-weight:900; letter-spacing:.08em;
-  color:#1a1205; background:linear-gradient(180deg, var(--accent), var(--accent-2));
-  border:.3cqw solid var(--frame); border-radius:.4cqw;
-  box-shadow:0 .4cqw 1cqw rgba(0,0,0,.5); white-space:nowrap;
+  position:absolute; top:-2.9cqh; left:1.2cqw;
+  padding:.45cqh 1.5cqw; font-size:2.05cqw; font-weight:900; letter-spacing:.06em;
+  color:#fff; background:linear-gradient(180deg,#2d4b8e,#16254a);
+  border:.28cqw solid var(--frame); border-radius:.45cqw;
+  box-shadow:0 .4cqw 1cqw rgba(0,0,0,.6), inset 0 .25cqw 0 rgba(255,255,255,.22);
+  white-space:nowrap; text-shadow:0 .2cqw .3cqw rgba(0,0,0,.7);
   opacity:0; transition:opacity .15s;
 }
 .nameplate.show{opacity:1;}
 
 .line{
-  font-size:3.1cqw; line-height:1.55; font-weight:600;
+  font-size:3.1cqw; line-height:1.55; font-weight:700; letter-spacing:.01em;
   white-space:pre-wrap; word-break:normal; overflow-wrap:anywhere;
-  text-shadow:0 .25cqw .3cqw rgba(0,0,0,.75);
+  text-shadow:var(--outline);
 }
 .line.testimony{color:var(--testimony); text-shadow:0 0 1.2cqw rgba(94,240,138,.5);}
 .line.press{color:var(--press);}
@@ -246,27 +387,44 @@ body{
 /* ===================== 法廷記録（証拠品） ===================== */
 .court-record{
   position:absolute; inset:0; z-index:60; display:none;
-  background:rgba(4,8,16,.9); padding:6cqh 6cqw;
+  background:rgba(4,8,16,.965); padding:6cqh 6cqw;
   flex-direction:column; gap:2.5cqh;
 }
 .court-record.show{display:flex;}
 .court-record h3{font-size:2.6cqw; letter-spacing:.3em; color:var(--accent); font-weight:900;}
 .court-record h3 small{font-size:1.5cqw; letter-spacing:.1em; color:var(--frame); opacity:.7; margin-left:2cqw;}
-.ev-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:2cqw; flex:1; align-content:start;}
-.ev{
-  background:var(--paper); color:#1a1611; border:.4cqw solid var(--accent-2);
-  border-radius:.6cqw; padding:1.4cqh 1.4cqw; cursor:pointer;
-  display:flex; flex-direction:column; gap:.8cqh; position:relative;
-  box-shadow:0 .6cqw 1.6cqw rgba(0,0,0,.5); transition:.12s;
+/* 1点を大きく出して ◀ ▶ で送る。グリッドに並べると「探す作業」になり、
+   投影では字が読めない。原作が1点ずつ見せているのは理にかなっている。 */
+.ev-stage{flex:1; display:grid; grid-template-columns:34cqw 1fr; gap:3cqw; align-items:center;}
+.ev-face{
+  background:var(--paper); border:.45cqw solid var(--accent-2); border-radius:.6cqw;
+  height:40cqh; display:grid; place-items:center; overflow:hidden;
+  box-shadow:0 1cqw 2.4cqw rgba(0,0,0,.6);
 }
-.ev:hover{translate:0 -.6cqh;}
-.ev.sel{outline:.5cqw solid var(--accent); outline-offset:.4cqw; translate:0 -.6cqh;}
-.ev .no{position:absolute; right:.8cqw; top:.6cqh; font-size:1.4cqw; font-weight:900; opacity:.45;}
-.ev .nm{font-size:1.9cqw; font-weight:900; line-height:1.25;}
-.ev .ds{font-size:1.45cqw; line-height:1.4; opacity:.8;}
-.ev .thumb{height:9cqh; background:#ddd7c6; border-radius:.3cqw; display:grid; place-items:center; overflow:hidden;}
-.ev .thumb img{width:100%; height:100%; object-fit:cover;}
-.ev .thumb svg{height:80%;}
+.ev-face img{width:100%; height:100%; object-fit:cover;}
+.ev-face svg{height:72%;}
+.ev-info .no{
+  font-size:1.5cqw; font-weight:900; letter-spacing:.3em; color:var(--accent);
+}
+.ev-info .nm{font-size:3.6cqw; font-weight:900; line-height:1.2; margin:.8cqh 0 1.4cqh;}
+.ev-info .ds{font-size:2.1cqw; line-height:1.55; opacity:.9;}
+.ev-info .dt{
+  font-size:1.75cqw; line-height:1.65; opacity:.72; margin-top:1.6cqh;
+  padding-top:1.4cqh; border-top:.15cqw solid rgba(255,255,255,.22);
+}
+.ev-nav{display:flex; align-items:center; justify-content:center; gap:2.4cqw; padding-top:1cqh;}
+.ev-nav button{
+  font-family:var(--font); font-size:2.4cqw; font-weight:900; color:var(--frame);
+  background:none; border:none; cursor:pointer; opacity:.6; padding:0 1cqw;
+}
+.ev-nav button:hover{opacity:1;}
+.ev-nav .pos{font-size:1.8cqw; font-weight:900; letter-spacing:.2em; opacity:.8;
+  font-variant-numeric:tabular-nums;}
+.ev-strip{display:flex; gap:.8cqw; justify-content:center;}
+.ev-strip i{
+  width:4.5cqw; height:.7cqh; border-radius:99px; background:rgba(255,255,255,.22); cursor:pointer;
+}
+.ev-strip i.cur{background:var(--accent);}
 
 /* ===================== 選択肢 ===================== */
 .choices{
@@ -361,12 +519,13 @@ body{
 .line .c{visibility:hidden;}
 .line .c.on{visibility:visible;}
 .statement-mark{
-  position:absolute; right:2.2cqw; top:-2.6cqh; font-size:1.7cqw; font-weight:900;
-  letter-spacing:.2em; color:var(--frame); opacity:.7;
+  position:fixed; left:50%; top:20.5cqh; translate:-50% 0; z-index:34;
+  font-size:1.6cqw; font-weight:900; letter-spacing:.25em;
+  color:var(--frame); text-shadow:var(--outline); opacity:.85;
 }
 .statement-mark.broken{color:var(--damage); opacity:1;}
 .hint{
-  position:absolute; right:2.5cqw; bottom:29.4cqh; z-index:45; text-align:right;
+  position:absolute; left:2.5cqw; bottom:29.6cqh; z-index:45; text-align:left;
   font-size:1.7cqw; font-weight:700; color:var(--press);
   background:rgba(0,0,0,.6); padding:.6cqh 1.6cqw; border-radius:.4cqw;
   display:none;

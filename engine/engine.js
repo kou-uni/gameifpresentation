@@ -91,13 +91,27 @@
 
     this.el.actors = h('div', 'actors');
 
+    /* カメラの層。内側ほど小さい動きを担当する（engine/camera.js 参照） */
+    var drift = h('div', 'drift');
+    drift.appendChild(bg); drift.appendChild(this.el.actors);
+    var world = h('div', 'world'); world.appendChild(drift);
+    var cam = h('div', 'cam'); cam.appendChild(world);
+    this.el.cam = cam; this.el.world = world; this.el.drift = drift;
+    this.cam = new G.Camera(this.root, cam, world, drift, bg);
+
     var hud = h('div', 'hud');
     this.el.life = h('div', 'life');
     this.el.chapter = h('div', 'chapter');
     hud.appendChild(this.el.life); hud.appendChild(this.el.chapter);
+    this.el.hud = hud;
 
     this.el.banner = h('div', 'banner');
     this.el.hint = h('div', 'hint');
+    this.el.prevArrow = h('div', 'stmt-arrow prev', '◀');
+    this.el.nextArrow = h('div', 'stmt-arrow next-s', '▶');
+    this.el.xebar = h('div', 'xe-bar',
+      '<button class="xe-btn press">ゆさぶる<span class="k">P</span></button>' +
+      '<button class="xe-btn present">つきつける<span class="k">E</span></button>');
 
     var tb = h('div', 'textbox');
     this.el.name = h('div', 'nameplate');
@@ -118,11 +132,16 @@
     this.el.toast = h('div', 'toast');
     this.el.shout = h('div', 'shout', '<span></span>');
     this.el.flash = h('div', 'flash');
+    this.el.vignette = h('div', 'vignette');
+    this.el.bars = h('div', 'bars', '<i></i><i></i>');
 
-    [bg, this.el.actors, this.el.banner, this.el.hint, this.el.slide, this.el.title,
-     tb, this.el.choices, this.el.record, this.el.notes, this.el.timer,
-     this.el.toast, this.el.menu, this.el.shout, this.el.flash
+    [cam, this.el.vignette, this.el.bars, this.el.banner, this.el.hint,
+     this.el.prevArrow, this.el.nextArrow, this.el.xebar,
+     this.el.slide, this.el.title, tb, this.el.choices, this.el.record,
+     this.el.notes, this.el.timer, this.el.toast, this.el.menu,
+     this.el.shout, this.el.flash
     ].forEach(function (e) { this.root.appendChild(e); }, this);
+    this.root.appendChild(hud);
 
     this.renderLife();
   };
@@ -168,14 +187,23 @@
       self.next();
     });
     this.root.addEventListener('contextmenu', function (e) { e.preventDefault(); self.back(); });
+
+    var stop = function (e) { e.stopPropagation(); };
+    this.el.prevArrow.addEventListener('click', function (e) { stop(e); self.stmtMove(-1); });
+    this.el.nextArrow.addEventListener('click', function (e) { stop(e); self.stmtMove(1); });
+    this.el.xebar.querySelector('.press').addEventListener('click', function (e) { stop(e); self.press(); });
+    this.el.xebar.querySelector('.present').addEventListener('click', function (e) { stop(e); self.openRecord(); });
+    this.el.xebar.addEventListener('click', stop);
   };
 
   /* ------------------------------------------------------------ HUD 系 -- */
   Player.prototype.renderLife = function () {
-    if (this.lifeMax <= 0) { this.el.life.innerHTML = ''; return; }
+    if (this.lifeMax <= 0) { this.el.life.innerHTML = ''; this.el.life.style.display = 'none'; return; }
     var s = '';
     for (var i = 0; i < this.lifeMax; i++) s += '<div class="pip' + (i < this.life ? '' : ' off') + '"></div>';
     this.el.life.innerHTML = s;
+    var r = this.life / this.lifeMax;
+    this.el.life.dataset.level = r > 0.6 ? 'high' : r > 0.3 ? 'mid' : 'low';
   };
   Player.prototype.setChapter = function (t, sub) {
     this.el.chapter.innerHTML = (sub ? '<small>' + sub + '</small>' : '') + (t || '');
@@ -235,9 +263,26 @@
       cb && cb();
     }, 1100);
   };
-  Player.prototype.setBg = function (name) {
+  /* 背景。meta.backgrounds に画像パスがあればそれを使い、無ければCSSの生成背景。
+     絵を描き足すほど本物に寄る、という伸びしろをここに置いてある。 */
+  /* 視点（angle）ごとの絵があればそれを優先する。
+     meta.backgrounds のキーは "courtroom" / "courtroom@defense" のように書く。
+     絵を3枚用意したぶんだけ、切り返しが本物になる。 */
+  Player.prototype.setBg = function (name, angle) {
+    if (name) this._bgName = name;
+    name = name || this._bgName;
     if (!name) return;
+    if (angle) this._bgAngle = angle;
     this.el.bg.dataset.bg = name;
+    var bgs = this.meta.backgrounds || {};
+    var src = bgs[name + '@' + (angle || this._bgAngle || '')] || bgs[name];
+    if (src) {
+      this.el.bg.style.backgroundImage = 'url("' + src + '")';
+      on(this.el.bg, 'img', true);
+    } else {
+      this.el.bg.style.backgroundImage = '';
+      on(this.el.bg, 'img', false);
+    }
   };
   Player.prototype.hurt = function (n) {
     if (this.lifeMax <= 0) return;
@@ -270,18 +315,35 @@
   Player.prototype.showLine = function (line) {
     var self = this;
     this.mode = 'line';
+    on(this.el.prevArrow, 'show', false);
+    on(this.el.nextArrow, 'show', false);
+    on(this.el.xebar, 'show', false);
     on(this.el.slide, 'show', false);
     on(this.el.title, 'show', false);
-    if (line.bg) this.setBg(line.bg);
     if (line.bgm !== undefined) G.sfx.bgm(line.bgm);
 
     var def = line.who ? this.cast[line.who] : null;
-    if (line.who === null || line.who === undefined) {
-      if (line.keepActor !== true) { /* ナレーションでも立ち絵は残す */ }
+    var side = line.side || (def && def.side) || 'center';
+    var prevSide = this._prevSide || 'center';
+    var shot = this.cam.autoFor(line, side, prevSide);
+
+    /* 席が入れ替わるときは切り返し。中身の差し替えはパンの途中でやる。 */
+    var swap = function () {
+      self.setBg(line.bg, shot.angle);
+      if (line.who) self.showActor(line.who, line.pose || 'talk', side);
+      if (line.hideActor) self.el.actors.innerHTML = '';
+      self.cam.set(shot);
+    };
+    var crossing = side !== 'center' && prevSide !== 'center' && side !== prevSide
+                   && line.whip !== false && !this.cam.reduced();
+    if (line.whip === true || crossing) {
+      G.sfx.play('move');
+      this.cam.whip(side === 'left' ? -1 : 1, swap);
     } else {
-      this.showActor(line.who, line.pose || 'talk', line.side);
+      swap();
     }
-    if (line.hideActor) this.el.actors.innerHTML = '';
+    this._prevSide = side;
+    on(this.el.bars, 'show', !!line.cinematic);
 
     on(this.el.name, 'show', !!def);
     this.el.name.textContent = def ? (def.name || line.who) : '';
@@ -301,6 +363,10 @@
       if (line.flash) self.flash();
       if (line.shake) self.shake();
       self.type(line.text || '', line.speed);
+      /* 読んでいる間だけ、気づかない速さで詰める。静止画に見せないため。 */
+      if (shot.move === 'drift' || shot.move === 'push') {
+        setTimeout(function () { if (self.mode === 'line') self.cam.creep(side, 1.05); }, 60);
+      }
     };
     if (line.shout) this.shout(line.shout, go); else go();
   };
@@ -403,6 +469,10 @@
     clearTimeout(this._autoT); this._autoT = null;
     on(this.el.banner, 'show', false);
     on(this.el.hint, 'show', false);
+    on(this.el.prevArrow, 'show', false);
+    on(this.el.nextArrow, 'show', false);
+    on(this.el.xebar, 'show', false);
+    on(this.el.bars, 'show', false);
     on(this.el.choices, 'show', false);
     on(this.el.record, 'show', false);
     on(this.el.slide, 'show', false);
@@ -528,7 +598,7 @@
     this.mode = 'statements';
     on(this.el.slide, 'show', false);
     on(this.el.title, 'show', false);
-    if (sc.bg) this.setBg(sc.bg);
+    this.setBg(sc.bg, st.angle || 'witness');
     this.showActor(sc.witness, st.pose || 'talk', sc.side);
     var def = this.cast[sc.witness] || {};
     on(this.el.name, 'show', true);
@@ -541,8 +611,17 @@
     on(this.el.mark, 'broken', !!t.solved[i]);
     this.el.line.className = 'line testimony';
     this.setNote(st.note);
-    this.el.hint.innerHTML = (st.press ? '<kbd>P</kbd> ゆさぶる　' : '') + '<kbd>E</kbd> 証拠をつきつける';
-    on(this.el.hint, 'show', true);
+    on(this.el.hint, 'show', false);
+    on(this.el.prevArrow, 'show', true);
+    on(this.el.nextArrow, 'show', true);
+    on(this.el.xebar, 'show', true);
+    this.el.xebar.querySelector('.press').style.opacity = (st.press && st.press.length) ? '1' : '.4';
+
+    /* 証言中のカメラ。証言台は正面、わずかに寄る。
+       突かれていない証言は「見られている」感じを作るため少し煽る。 */
+    this.cam.set(st.shot ? { shot: st.shot, angle: st.angle || 'witness', move: 'snap', side: sc.side }
+                         : { shot: 'mid', angle: 'witness', move: 'snap', side: sc.side });
+    this._prevSide = sc.side || 'center';
     this.type(st.text || '', sc.speed);
   };
 
@@ -568,7 +647,11 @@
   Player.prototype.present = function (evId) {
     var t = this.t, sc = t.sc, st = sc.statements[t.i], self = this;
     on(this.el.record, 'show', false);
+    on(this.root, 'overlay-open', false);
     on(this.el.hint, 'show', false);
+    on(this.el.prevArrow, 'show', false);
+    on(this.el.nextArrow, 'show', false);
+    on(this.el.xebar, 'show', false);
     this.mode = 'line';
     if (st.weak && st.weak.evidence === evId) {
       t.solved[t.i] = true;
@@ -687,51 +770,76 @@
     var self = this;
     var list = this.evidence.filter(function (e) { return self.owned[e.id]; });
     if (!list.length) { this.toast('法廷記録はまだ空だ', 1200); return; }
-    this._prevMode = this.mode;
+    if (this.mode !== 'record') this._prevMode = this.mode;
     this.mode = 'record';
     this.r = { list: list, i: 0, presenting: this._prevMode === 'statements' };
+
     var r = this.el.record;
-    r.innerHTML = '<h3>法廷記録<small>' +
-      (this.r.presenting ? '数字キー or クリックで <b>つきつける</b>　Esc/E で閉じる'
-                         : '数字キーで内容を見る　Esc/E で閉じる') +
-      '</small></h3><div class="ev-grid"></div>';
-    var grid = r.querySelector('.ev-grid');
+    r.innerHTML =
+      '<h3>法廷記録<small>' +
+        (this.r.presenting ? '◀ ▶ で選び、<b>Enter / クリック</b> でつきつける　Esc で閉じる'
+                           : '◀ ▶ で送る　Esc で閉じる') +
+      '</small></h3>' +
+      '<div class="ev-stage"><div class="ev-face"></div><div class="ev-info"></div></div>' +
+      '<div class="ev-nav"><button class="pv">◀</button><span class="pos"></span><button class="nx">▶</button></div>' +
+      '<div class="ev-strip"></div>';
+
+    r.querySelector('.pv').addEventListener('click', function (e) { e.stopPropagation(); self.recordMove(-1); });
+    r.querySelector('.nx').addEventListener('click', function (e) { e.stopPropagation(); self.recordMove(1); });
+    r.querySelector('.ev-stage').addEventListener('click', function (e) { e.stopPropagation(); self.recordPick(self.r.i); });
+
+    var strip = r.querySelector('.ev-strip');
     list.forEach(function (e, i) {
-      var card = h('div', 'ev');
-      card.dataset.i = i;
-      card.innerHTML =
-        '<div class="no">' + (i + 1) + '</div>' +
-        '<div class="thumb">' + (e.img ? '<img src="' + e.img + '" alt="">' : G.art.evidenceIcon(e.icon)) + '</div>' +
-        '<div class="nm">' + e.name + '</div>' +
-        '<div class="ds">' + (e.desc || '') + '</div>';
-      card.addEventListener('click', function () { self.recordPick(i); });
-      card.addEventListener('mouseenter', function () { self.recordSel(i); });
-      grid.appendChild(card);
+      var b = h('i');
+      b.addEventListener('click', function (ev) { ev.stopPropagation(); self.recordSel(i); });
+      strip.appendChild(b);
     });
+
     on(r, 'show', true);
+    on(this.root, 'overlay-open', true);
     this.recordSel(0);
     G.sfx.play('open');
   };
+
   Player.prototype.recordSel = function (i) {
+    var r = this.el.record, e = this.r.list[i];
     this.r.i = i;
-    Array.prototype.forEach.call(this.el.record.querySelectorAll('.ev'), function (el, j) { on(el, 'sel', i === j); });
+    r.querySelector('.ev-face').innerHTML =
+      e.img ? '<img src="' + e.img + '" alt="">' : G.art.evidenceIcon(e.icon);
+    r.querySelector('.ev-info').innerHTML =
+      '<div class="no">証拠品 ' + (i + 1) + ' / ' + this.r.list.length + '</div>' +
+      '<div class="nm">' + e.name + '</div>' +
+      '<div class="ds">' + (e.desc || '') + '</div>' +
+      (e.detail ? '<div class="dt">' + e.detail + '</div>' : '');
+    r.querySelector('.pos').textContent = (i + 1) + ' / ' + this.r.list.length;
+    Array.prototype.forEach.call(r.querySelectorAll('.ev-strip i'), function (b, j) { on(b, 'cur', i === j); });
   };
+
+  Player.prototype.recordMove = function (d) {
+    var n = this.r.list.length;
+    G.sfx.play('move');
+    this.recordSel((this.r.i + d + n) % n);
+  };
+
   Player.prototype.recordPick = function (i) {
     var e = this.r.list[i];
     if (this.r.presenting) return this.present(e.id);
     G.sfx.play('select');
-    this.toast('<b>' + e.name + '</b>　' + (e.detail || e.desc || ''), 4200);
+    this.toast('<b>' + e.name + '</b>', 1600);
   };
+
   Player.prototype.recordKey = function (ev) {
     var k = ev.key, n = this.r.list.length;
     if (k === 'Escape' || k === 'e' || k === 'E') { ev.preventDefault(); return this.closeRecord(); }
     if (k >= '1' && k <= '9') { ev.preventDefault(); var i = +k - 1; if (i < n) { this.recordSel(i); this.recordPick(i); } return; }
-    if (k === 'ArrowRight' || k === 'ArrowDown') { ev.preventDefault(); G.sfx.play('move'); return this.recordSel((this.r.i + 1) % n); }
-    if (k === 'ArrowLeft' || k === 'ArrowUp') { ev.preventDefault(); G.sfx.play('move'); return this.recordSel((this.r.i + n - 1) % n); }
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown') { ev.preventDefault(); return this.recordMove(1); }
+    if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') { ev.preventDefault(); return this.recordMove(-1); }
     if (k === ' ' || k === 'Enter') { ev.preventDefault(); return this.recordPick(this.r.i); }
   };
+
   Player.prototype.closeRecord = function () {
     on(this.el.record, 'show', false);
+    on(this.root, 'overlay-open', false);
     G.sfx.play('close');
     this.mode = this._prevMode || 'idle';
     if (this.mode === 'statements') this.stmtShow(this.t.i);
@@ -764,10 +872,13 @@
       ol.appendChild(li);
     });
     on(m, 'show', true);
+    on(this.root, 'overlay-open', true);
     G.sfx.play('open');
   };
   Player.prototype.closeMenu = function () {
-    on(this.el.menu, 'show', false); G.sfx.play('close');
+    on(this.el.menu, 'show', false);
+    on(this.root, 'overlay-open', false);
+    G.sfx.play('close');
     this.mode = this._prevMode2 || 'idle';
     if (this.mode === 'statements') this.stmtShow(this.t.i);
   };

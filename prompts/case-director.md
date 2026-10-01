@@ -52,6 +52,9 @@
 - **操作説明はキャラに言わせる。** スライドで説明すると空気が止まる
 - **数字には出典と年を書く。** `evidence[].detail` に入れる
 - **`note`（発表者ノート）を要所に入れる。** 当日の自分を助ける
+- **決めの3箇所に画角を書く。** ムジュンの1行目 `"shot":"point","move":"punch","cinematic":true` /
+  証人が崩れる行 `"pose":"damage"` / 裁定の行 `"shot":"high","angle":"judge","move":"pull"`。
+  残りは自動で付くので書かない
 - **最後に `verdict` で回収する。** takeaways 3〜5個
 
 ## 出力

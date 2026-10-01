@@ -44,7 +44,7 @@ function buildArtifact(casePath) {
   const caseObj = JSON.parse(read(casePath));
   const { json } = inlineAssets(caseObj);
   const css = read('engine/theme.css');
-  const js = ['engine/sfx.js', 'engine/art.js', 'engine/engine.js'].map(read).join('\n');
+  const js = ['engine/sfx.js', 'engine/art.js', 'engine/camera.js', 'engine/engine.js'].map(read).join('\n');
   const name = (caseObj.meta && caseObj.meta.artifactTitle)
     || (caseObj.meta && caseObj.meta.title || basename(casePath, '.json')).replace(/<[^>]+>/g, '');
   const html = `<title>${name}</title>
@@ -72,7 +72,7 @@ function buildOne(casePath) {
   const { json, missing } = inlineAssets(caseObj);
 
   const css = read('engine/theme.css');
-  const js = ['engine/sfx.js', 'engine/art.js', 'engine/engine.js'].map(read).join('\n');
+  const js = ['engine/sfx.js', 'engine/art.js', 'engine/camera.js', 'engine/engine.js'].map(read).join('\n');
   const title = (caseObj.meta && caseObj.meta.title) || basename(casePath, '.json');
 
   const html = `<!doctype html>

@@ -85,13 +85,19 @@
   /* --- 腕（ポーズ） --- */
   function arms(pose, p) {
     var sleeve = p.outfit, hand = p.skin;
+    /* 指差し: 体を横切って斜めに。手は胸の高さで、頭より小さい。
+       （docs/ILLUSTRATION-PROMPTS.md の POSE point と同じ仕様） */
     if (pose === 'point')
-      return '<path d="M132 214 q54 -22 78 -66 l20 14 q-26 56 -88 76Z" fill="'+sleeve+'"/>'
-           + '<circle cx="224" cy="156" r="15" fill="'+hand+'"/>'
-           + '<path d="M224 148 l30 -26 l8 9 l-30 26Z" fill="'+hand+'"/>';
+      return '<path d="M124 196 q-40 -8 -70 16 l10 22 q30 -18 64 -14Z" fill="'+sleeve+'"/>'
+           + '<circle cx="46" cy="222" r="17" fill="'+hand+'"/>'
+           + '<path d="M40 214 l-30 -12 l-4 12 l30 12Z" fill="'+hand+'"/>'
+           + '<path d="M76 212 q28 16 48 10 l-4 18 q-28 4 -52 -12Z" fill="'+sleeve+'"/>';
+    /* 机バン: 両手を画面下端に。顔は隠さない */
     if (pose === 'slam')
-      return '<path d="M132 210 q60 4 86 42 l-18 16 q-24 -32 -70 -34Z" fill="'+sleeve+'"/>'
-           + '<circle cx="206" cy="264" r="18" fill="'+hand+'"/>';
+      return '<path d="M126 206 q44 14 60 56 l-22 10 q-14 -34 -48 -44Z" fill="'+sleeve+'"/>'
+           + '<path d="M74 206 q-44 14 -60 56 l22 10 q14 -34 48 -44Z" fill="'+sleeve+'"/>'
+           + '<ellipse cx="172" cy="282" rx="20" ry="14" fill="'+hand+'"/>'
+           + '<ellipse cx="28" cy="282" rx="20" ry="14" fill="'+hand+'"/>';
     if (pose === 'think')
       return '<path d="M124 216 q40 -6 54 -34 l20 10 q-18 42 -66 48Z" fill="'+sleeve+'"/>'
            + '<circle cx="176" cy="178" r="14" fill="'+hand+'"/>';

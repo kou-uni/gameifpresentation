@@ -107,12 +107,17 @@
           "pose": "normal",
           "sfx": "gavel",
           "text": "これより、<b>第1審</b>を開廷する。",
-          "note": "拍手を煽ってもいい。場が温まる。"
+          "note": "拍手を煽ってもいい。場が温まる。",
+          "shot": "wide",
+          "angle": "front",
+          "move": "pull"
         },
         {
           "who": "judge",
           "pose": "talk",
-          "text": "争点はひとつ。<em>「量子コンピュータは、来年にはRSA暗号を破るのか」</em>"
+          "text": "争点はひとつ。<em>「量子コンピュータは、来年にはRSA暗号を破るのか」</em>",
+          "shot": "mid",
+          "angle": "judge"
         },
         {
           "who": "himuro",
@@ -129,7 +134,8 @@
         {
           "who": "hero",
           "pose": "confident",
-          "text": "弁護人は争います。\n<b>破られる日</b>と、<b>対策すべき日</b>は、まったく別の日です。"
+          "text": "弁護人は争います。\n<b>破られる日</b>と、<b>対策すべき日</b>は、まったく別の日です。",
+          "shot": "stare"
         }
       ]
     },
@@ -260,36 +266,64 @@
                 "who": "hero",
                 "pose": "point",
                 "flash": true,
-                "text": "その「1,121」は<b>物理</b>量子ビットだ。\nそしてRSAを解くのに必要なのは<em>論理</em>量子ビットだ。"
+                "text": "その「1,121」は<b>物理</b>量子ビットだ。\nそしてRSAを解くのに必要なのは<em>論理</em>量子ビットだ。",
+                "shot": "point",
+                "move": "punch",
+                "cinematic": true
               },
               {
                 "who": "hero",
                 "pose": "confident",
-                "text": "誤り訂正のため、<b>論理1個に物理およそ1,000個。</b>\n1,121個の物理量子ビットは——<span class=\"hit\">論理1個ぶん</span>にすぎない。"
+                "text": "誤り訂正のため、<b>論理1個に物理およそ1,000個。</b>\n1,121個の物理量子ビットは——<span class=\"hit\">論理1個ぶん</span>にすぎない。",
+                "shot": "close",
+                "move": "push",
+                "cinematic": true
               },
               {
                 "who": "hype",
                 "pose": "damage",
                 "sfx": "damage",
                 "shake": true,
-                "text": "な……1,000倍……！？"
+                "text": "な……1,000倍……！？",
+                "shot": "shock",
+                "move": "punch",
+                "cinematic": true
               },
               {
                 "who": "himuro",
                 "pose": "shock",
-                "text": "（半分どころか、<span class=\"hit\">1,000分の1</span>だったというのか……）"
+                "text": "（半分どころか、<span class=\"hit\">1,000分の1</span>だったというのか……）",
+                "shot": "close",
+                "angle": "defense",
+                "cinematic": true
+              },
+              {
+                "who": null,
+                "hideActor": true,
+                "bg": "gallery",
+                "shot": "gallery",
+                "move": "pull",
+                "angle": "gallery",
+                "sfx": "move",
+                "text": "ざわ……　ざわ……",
+                "note": "ここで客席を見渡す。黙って3秒。ざわつきは本物のほうがいい"
               },
               {
                 "who": "hero",
                 "pose": "normal",
                 "text": "2019年の見積りでは、RSA-2048を8時間で解くのに<b>物理2,000万個</b>。\n2025年の改良版でも100万未満。それでも現行機の<em>1,000倍</em>だ。",
-                "note": "ここで ev-gidney の中身を口で言う。証拠は見せるだけでなく読み上げる。"
+                "note": "ここで ev-gidney の中身を口で言う。証拠は見せるだけでなく読み上げる。",
+                "shot": "mid",
+                "bg": "stand"
               },
               {
                 "who": "judge",
                 "pose": "normal",
                 "sfx": "gavel",
-                "text": "……量子ビットの数は、<b>物理か論理かを聞くまで意味を持たない</b>。\n本法廷はそう認定する。"
+                "text": "……量子ビットの数は、<b>物理か論理かを聞くまで意味を持たない</b>。\n本法廷はそう認定する。",
+                "shot": "high",
+                "angle": "judge",
+                "move": "pull"
               }
             ],
             "onWrong": [
@@ -317,12 +351,18 @@
                 "who": "hero",
                 "pose": "point",
                 "flash": true,
-                "text": "逆だ。<b>破られる前にやらなければ、間に合わない。</b>"
+                "text": "逆だ。<b>破られる前にやらなければ、間に合わない。</b>",
+                "shot": "point",
+                "move": "punch",
+                "cinematic": true
               },
               {
                 "who": "hero",
                 "pose": "confident",
-                "text": "攻撃者は<em>いま暗号文を盗んで保存し、量子が来た将来に復号する</em>。\n——<b>harvest now, decrypt later</b>。"
+                "text": "攻撃者は<em>いま暗号文を盗んで保存し、量子が来た将来に復号する</em>。\n——<b>harvest now, decrypt later</b>。",
+                "shot": "close",
+                "move": "push",
+                "cinematic": true
               },
               {
                 "who": "hero",
@@ -334,13 +374,18 @@
                 "pose": "damage",
                 "sfx": "damage",
                 "shake": true,
-                "text": "そ、そんな……両方から殴られた……！"
+                "text": "そ、そんな……両方から殴られた……！",
+                "shot": "slam",
+                "move": "punch"
               },
               {
                 "who": "judge",
                 "pose": "normal",
                 "sfx": "gavel",
-                "text": "<b>誇大広告の否定</b>と、<b>対策の不要</b>は別の主張である。\n混ぜた証言は、証言として採用できない。"
+                "text": "<b>誇大広告の否定</b>と、<b>対策の不要</b>は別の主張である。\n混ぜた証言は、証言として採用できない。",
+                "shot": "high",
+                "angle": "judge",
+                "move": "pull"
               }
             ],
             "onWrong": [
@@ -467,7 +512,10 @@
                 "who": "hero",
                 "pose": "point",
                 "flash": true,
-                "text": "<b>古典データに、量子の優位は示されていない。</b>"
+                "text": "<b>古典データに、量子の優位は示されていない。</b>",
+                "shot": "point",
+                "move": "punch",
+                "cinematic": true
               },
               {
                 "who": "hero",
@@ -477,14 +525,18 @@
               {
                 "who": "hero",
                 "pose": "normal",
-                "text": "優位が残るのは、<b>データがもともと量子であるとき</b>。\n御社の顧客データは——量子ですか？"
+                "text": "優位が残るのは、<b>データがもともと量子であるとき</b>。\n御社の顧客データは——量子ですか？",
+                "shot": "stare",
+                "move": "push"
               },
               {
                 "who": "aikawa",
                 "pose": "damage",
                 "sfx": "damage",
                 "shake": true,
-                "text": "……CSVです……"
+                "text": "……CSVです……",
+                "shot": "shock",
+                "move": "punch"
               },
               {
                 "who": "azuki",

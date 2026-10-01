@@ -10,9 +10,13 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VALID_TYPES = ['title', 'dialogue', 'slide', 'evidence', 'testimony', 'choice', 'verdict'];
-const VALID_BG = ['courtroom', 'stand', 'lobby', 'dark', 'white'];
+const VALID_BG = ['courtroom', 'stand', 'lobby', 'dark', 'white', 'gallery'];
 const VALID_SFX = ['type','gavel','objection','breakthrough','wrong','damage','evidence',
                    'press','select','move','open','close','fanfare','reveal'];
+const VALID_SHOT  = ['wide','mid','close','extreme','low','high','think','gallery',
+                     'point','slam','shock','stare'];
+const VALID_ANGLE = ['front','defense','prosecution','witness','judge','gallery'];
+const VALID_MOVE  = ['cut','snap','punch','push','pull','drift'];
 
 let totalErr = 0, totalWarn = 0;
 
@@ -41,13 +45,25 @@ function checkCase(file) {
     if (!e.detail && !e.desc) W(`evidence ${e.id} に説明がない — つきつける前に読ませられない`);
   });
 
+  /* 画像を差し込んでいる役で、使っているポーズの絵が無い場合は既定絵に落ちる。
+     黙って落ちると当日まで気づかないので警告する。 */
+  const posedCast = new Set(Object.keys(d.cast || {}).filter(k => d.cast[k].img));
+  const missingPose = new Set();
+
   const checkLines = (lines, where) => (lines || []).forEach((l, i) => {
     const at = `${where}.lines[${i}]`;
     if (l.who && !castIds.includes(l.who)) E(`${at}: who "${l.who}" が cast にない`);
     if (l.bg && !VALID_BG.includes(l.bg)) W(`${at}: bg "${l.bg}" は未知（${VALID_BG.join('/')}）`);
     if (l.sfx && !VALID_SFX.includes(l.sfx)) W(`${at}: sfx "${l.sfx}" は未知`);
+    if (l.shot && !VALID_SHOT.includes(l.shot)) W(`${at}: shot "${l.shot}" は未知（${VALID_SHOT.join('/')}）`);
+    if (l.angle && !VALID_ANGLE.includes(l.angle)) W(`${at}: angle "${l.angle}" は未知（${VALID_ANGLE.join('/')}）`);
+    if (l.move && !VALID_MOVE.includes(l.move)) W(`${at}: move "${l.move}" は未知（${VALID_MOVE.join('/')}）`);
     if (!l.text && !l.shout) W(`${at}: text が空`);
     if (l.text && l.text.length > 120) W(`${at}: ${l.text.length}文字 — テキストボックスから溢れる（目安90文字まで）`);
+    if (l.who && l.pose && posedCast.has(l.who)) {
+      const poses = d.cast[l.who].poses || {};
+      if (!poses[l.pose]) missingPose.add(`${l.who}:${l.pose}`);
+    }
   });
 
   let hasVerdict = false, testimonyCount = 0, interactions = 0;
@@ -124,6 +140,7 @@ function checkCase(file) {
     }
   });
 
+  missingPose.forEach(k => W(`cast.${k.split(':')[0]}.poses に "${k.split(':')[1]}" の絵がない — 既定の絵に落ちます`));
   if (!hasVerdict) W('verdict シーンがない — 学びを回収せずに終わる');
   if (!testimonyCount) W('testimony が1つもない — これは法廷型ではなく普通のスライド');
   if (interactions < 2) W(`聴衆が手を動かす場面が ${interactions} 回 — ゲームとして薄い（3回以上を目安に）`);

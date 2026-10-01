@@ -26,6 +26,7 @@ description: 法廷バトル型プレゼン（GAMEIF PRESENTATION）のケース
 ## エンジンを直すとき
 
 - `engine/engine.js` … 進行の状態機械
+- `engine/camera.js` … 画角（寄り・切り返し・煽り）。決めショットの語彙はここ
 - `engine/theme.css` … 見た目とトンマナ
 - `engine/art.js` … 立ち絵のSVG生成
 - `engine/sfx.js` … 効果音（WebAudio合成。音源ファイルは持たない）
@@ -36,6 +37,8 @@ description: 法廷バトル型プレゼン（GAMEIF PRESENTATION）のケース
 
 ## 守ること
 
-- 既存ゲームの画像・音・フォントを持ち込まない。立ち絵はSVG生成、音はWebAudio合成。
+- 既存ゲームの画像・音・フォント・キャラクターを持ち込まない。立ち絵はSVG生成、音はWebAudio合成。
+  絵が要るときは自分で描かず、`docs/ILLUSTRATION-PROMPTS.md` の様式でプロンプトを出す。
+- 作りたいのは特定作品の再現ではなく、**ゲームをしているようなプレゼン**。法廷は第一形式。
 - 外部ネットワークに依存しない（会場のWi-Fiは死ぬ前提）。
 - 行き止まりを作らない。ライフ0でも審理は続行する。
